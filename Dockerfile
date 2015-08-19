@@ -67,7 +67,7 @@ EXPOSE 80
 # add template for varnish
 ADD pagespeed/varnish/template /etc/varnish/
 
-ADD start /start
+ADD pagespeed/start /start
 RUN chmod +x /start
 ENTRYPOINT ["/start"]
 

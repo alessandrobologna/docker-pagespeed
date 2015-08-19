@@ -57,14 +57,14 @@ WORKDIR /etc/nginx/
 
 # Configure nginx
 RUN chmod 777 /var/ngx_pagespeed_cache
-ADD nginx.conf /etc/nginx/nginx.conf
-ADD sites-enabled /etc/nginx/sites-enabled
+ADD pagespeed/nginx.conf /etc/nginx/nginx.conf
+ADD pagespeed/sites-enabled /etc/nginx/sites-enabled
 
 
 EXPOSE 80
 
 # add template for varnish
-ADD varnish/template /etc/varnish/
+ADD pagespeed/varnish/template /etc/varnish/
 
 ADD start /start
 RUN chmod +x /start

@@ -1,0 +1,102 @@
+pagespeed ForceCaching on;
+pagespeed FetchWithGzip on;
+pagespeed UseNativeFetcher on;
+pagespeed FetchHttps enable;
+pagespeed RateLimitBackgroundFetches off;
+
+resolver 8.8.8.8;
+pagespeed GlobalAdminPath /pagespeed_global_admin;
+pagespeed GlobalStatisticsPath /ngx_pagespeed_global_statistics;
+pagespeed DownstreamCachePurgeLocationPrefix http://localhost:80;
+pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
+pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
+
+server {
+	listen ${NGINX_PORT};
+	
+	server_name ${SERVER_NAME:-localhost} 
+
+	pagespeed on;
+
+	pagespeed FileCachePath			  "/var/ngx_pagespeed_cache";
+	pagespeed FileCacheSizeKb			 102400000;
+	pagespeed FileCacheCleanIntervalMs   3600000;
+	pagespeed FileCacheInodeLimit		 500000;
+
+
+	# admin handlers
+	location /ngx_pagespeed_statistics {  }
+	location /ngx_pagespeed_global_statistics {  }
+	location /ngx_pagespeed_message {  }
+	location /pagespeed_console {  }
+	location ~ ^/pagespeed_admin {  }
+	location ~ ^/pagespeed_global_admin {  }
+
+	pagespeed StatisticsPath /ngx_pagespeed_statistics;
+	pagespeed MessagesPath /ngx_pagespeed_message;
+	pagespeed ConsolePath /pagespeed_console;
+	pagespeed AdminPath /pagespeed_admin;
+	
+	# Ensure requests for pagespeed optimized resources go to the pagespeed handler
+	# and no extraneous headers get set.
+	location ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+" {
+	  add_header "" "";
+	}
+	location ~ "^/pagespeed_static/" { }
+	location ~ "^/ngx_pagespeed_beacon$" { }
+	
+  
+	pagespeed UseExperimentalJsMinifier on;
+	pagespeed AvoidRenamingIntrospectiveJavascript off;
+	
+	pagespeed PreserveUrlRelativity on;
+	pagespeed InPlaceResourceOptimization on;
+	pagespeed ImplicitCacheTtlMs 3600000;
+	
+	pagespeed DisableRewriteOnNoTransform off;
+	pagespeed UrlValuedAttribute img data-src image;
+	pagespeed UrlValuedAttribute a data-src image;
+	pagespeed EnableFilters extend_cache;
+	pagespeed DomainRewriteHyperlinks on;
+	pagespeed InlineResourcesWithoutExplicitAuthorization Script,Stylesheet;
+	pagespeed EnableFilters prioritize_critical_css;
+		
+	pagespeed EnableFilters rewrite_domains;
+	pagespeed EnableFilters move_css_to_head,move_css_above_scripts;
+	pagespeed EnableFilters collapse_whitespace;
+	pagespeed EnableFilters inline_preview_images,resize_mobile_images,lazyload_images;
+	pagespeed EnableFilters trim_urls;
+	
+	pagespeed Domain ${FRONTEND};
+	pagespeed Domain ${BACKEND};
+	pagespeed Domain ${BACKENDS};
+	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
+	pagespeed MapRewriteDomain ${FRONTEND} ${BACKENDS};
+
+	${MAP_PROXY_DOMAINS}
+	
+	location ~^/proxy/(?<domain>[^/]+)/ {
+		rewrite ^/proxy/[^/]+/(.*) /\$1 break;
+		proxy_pass  http://\$domain;
+		proxy_read_timeout 10s;
+		proxy_http_version 1.1;
+		proxy_hide_header Vary;
+		proxy_hide_header Expires;
+		proxy_hide_header Cache-Control;
+		proxy_hide_header Last-Modified;
+		proxy_hide_header Pragma;
+	}
+			
+	location / {
+	
+		proxy_pass http://${BACKEND:-127.0.0.1:8080};
+		proxy_read_timeout 10s;
+		proxy_http_version 1.1;
+		proxy_hide_header Vary;
+		proxy_hide_header Expires;
+		proxy_hide_header Cache-Control;
+		proxy_hide_header Last-Modified;
+		proxy_hide_header Pragma;
+
+	}
+}

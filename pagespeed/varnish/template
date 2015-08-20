@@ -190,12 +190,13 @@ sub vcl_fetch {
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
   set resp.http.PS-CapabilityList = req.http.PS-CapabilityList;
+  set resp.http.X-Age = resp.http.PSAge;
   if (req.http.X-purger) {
     set resp.http.X-purger = req.http.X-purger;
   }
   if (obj.hits > 0) {
-    set resp.http.X-Cache = "HIT";
+    set resp.http.X-PSCache = "HIT";
   } else {
-    set resp.http.X-Cache = "MISS";
+    set resp.http.X-PSCache = "MISS";
   }
 }

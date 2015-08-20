@@ -1,2 +1,2 @@
 # docker-pagespeed
-a docker build of pagesped, nginx and varnish
+a docker build of pagespeed, nginx and varnish

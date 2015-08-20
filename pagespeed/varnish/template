@@ -173,7 +173,7 @@ sub vcl_recv {
   # }
 }
 
-# Block 6: Mark HTML uncacheable by caches beyond our control.
+# Block 6: remove upstream cache control and varnish headers
 sub vcl_fetch {
    if (beresp.http.Content-Type ~ "text/html") {
      # Hide the upstream cache control headers.
@@ -181,7 +181,11 @@ sub vcl_fetch {
      remove beresp.http.Last-Modified;
      remove beresp.http.Cache-Control;
      remove beresp.http.X-Cache;
-     # Add no-cache Cache-Control header for html.
+     remove beresp.http.X-Age;
+     remove beresp.http.X-Varnish-Cache;
+     remove beresp.http.X-Varnish-Cache-Hits;
+     remove beresp.http.X-Varnish;
+     
      set beresp.http.Cache-Control = "no-cache, max-age=0";
    }
    return (deliver);
@@ -190,13 +194,15 @@ sub vcl_fetch {
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
   set resp.http.PS-CapabilityList = req.http.PS-CapabilityList;
-  set resp.http.X-Age = resp.http.PSAge;
+  set resp.http.X-Page-Speed-Age = resp.http.Age;
   if (req.http.X-purger) {
     set resp.http.X-purger = req.http.X-purger;
   }
   if (obj.hits > 0) {
-    set resp.http.X-PSCache = "HIT";
+    set resp.http.X-Page-Speed-Cache = "HIT";
+    # add a configurable extension to the ttl for other caches
+    set resp.http.Cache-Control="public, max-age: ${MAX_AGE:-300}";
   } else {
-    set resp.http.X-PSCache = "MISS";
+    set resp.http.X-Page-Speed-Cache = "MISS";
   }
 }

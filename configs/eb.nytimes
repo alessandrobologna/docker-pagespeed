@@ -1,0 +1,7 @@
+BACKEND="www.nytimes.com"
+PROXY_DOMAINS="static01.nyt.com s1.nyt.com a1.nyt.com int.nyt.com cdn.optimizely.com typeface.nytimes.com graphics8.nytimes.com "
+SERVER_NAME="app-accelerator-demo.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-demo.elasticbeanstalk.com"
+SECRET_KEY="foobar-123"
+MEMCACHED="pagespeed-memcache.oeiwnb.0001.use1.cache.amazonaws.com:11211, pagespeed-memcache.oeiwnb.0002.use1.cache.amazonaws.com:11211"
+

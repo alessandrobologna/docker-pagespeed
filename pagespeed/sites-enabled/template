@@ -11,17 +11,19 @@ pagespeed DownstreamCachePurgeLocationPrefix http://localhost:80;
 pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
 pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
 
+${MEMCACHED_SERVERS}
+
 server {
-	listen ${NGINX_PORT};
+	listen 8080;
 	
 	server_name ${SERVER_NAME:-localhost} 
 
 	pagespeed on;
 
-	pagespeed FileCachePath			  "/var/ngx_pagespeed_cache";
-	pagespeed FileCacheSizeKb			 102400000;
-	pagespeed FileCacheCleanIntervalMs   3600000;
-	pagespeed FileCacheInodeLimit		 500000;
+	pagespeed FileCachePath				"/var/ngx_pagespeed_cache";
+	pagespeed FileCacheSizeKb			102400000;
+	pagespeed FileCacheCleanIntervalMs	3600000;
+	pagespeed FileCacheInodeLimit		500000;
 
 
 	# admin handlers
@@ -69,11 +71,11 @@ server {
 	
 	pagespeed Domain ${FRONTEND};
 	pagespeed Domain ${BACKEND};
-	pagespeed Domain ${BACKENDS};
 	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
-	pagespeed MapRewriteDomain ${FRONTEND} ${BACKENDS};
 
-	${MAP_PROXY_DOMAINS}
+${MAP_BACKENDS}
+	
+${MAP_PROXY_DOMAINS}
 	
 	location ~^/proxy/(?<domain>[^/]+)/ {
 		rewrite ^/proxy/[^/]+/(.*) /\$1 break;

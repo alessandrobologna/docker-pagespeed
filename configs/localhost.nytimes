@@ -1,0 +1,5 @@
+BACKEND="www.nytimes.com"
+BACKENDS="*.nyt.com"
+SERVER_NAME="192.168.99.100"
+FRONTEND="http://192.168.99.100"
+SECRET_KEY="foobar"

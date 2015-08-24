@@ -1,17 +1,31 @@
-#!/bin/bash
+#!/bin/bash 
 
 # remove old default
 rm -f /etc/nginx/sites-enabled/default
 
-# build proxy domains
+# maybe build backends
+MAP_BACKENDS=$(for backend in ${BACKENDS}
+do
+	echo -e "\tpagespeed Domain ${backend};"
+	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND} ${backend};"
+done)
+
+# maybe build proxy domains
 MAP_PROXY_DOMAINS=$(for domain in ${PROXY_DOMAINS}
 do
 	echo -e "\tpagespeed Domain ${domain};"
 	echo -e "\tpagespeed MapOriginDomain 127.0.0.1/proxy/${domain} ${domain};"
 	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND}/proxy/${domain} ${domain};"
 done)
+
+# maybe configure memcache 
+MEMCACHED_SERVERS=$(if [[ -n "${MEMCACHED}" ]]
+then 
+	echo -e "pagespeed MemcachedServers \"${MEMCACHED}\";"
+fi)
+
 # replace env variables in template
-echo "$(eval "echo \"$(sed 's/\"/\\\"/g' /etc/nginx/sites-enabled/template)\"")" >  /etc/nginx/sites-enabled/default.conf
+echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' /etc/nginx/sites-enabled/template)\"")" >  /etc/nginx/sites-enabled/default.conf
 cat /etc/nginx/sites-enabled/default.conf
 
 # create cache dir

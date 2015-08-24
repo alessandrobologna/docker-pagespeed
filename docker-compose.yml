@@ -1,15 +1,13 @@
 pagespeed:
   build: .
   environment:
-    AWS_ACCESS_KEY_ID:
-    AWS_SECRET_ACCESS_KEY:
     SECRET_KEY:
-    NGINX_PORT:
     COOKIES:
     BACKEND:
     BACKENDS:
     FRONTEND:
     SERVER_NAME:
     PROXY_DOMAINS:
+    MEMCACHED:
   ports:
    - "80:80"

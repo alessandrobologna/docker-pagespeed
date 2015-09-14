@@ -5,11 +5,11 @@ machine:
 dependencies:
   override:
     - docker info
-    - docker build -t alessandrob/pagespeed .
+    - docker build -t alessandrob/pagespeed docker/
 
 test:
   override:
-    - docker run -d -p 80:80 -e SECRET_KEY=foobar -e NGINX_PORT=8080 -e BACKEND=www.google.com -e BACKENDS=*.google.com  -e FRONTEND=http://localhost -e SERVER_NAME=localhost  alessandrob/pagespeed; sleep 10
+    - docker run -d -p 80:80  -e BACKEND=www.google.com -e FRONTEND=http://localhost -e SERVER_NAME=localhost  alessandrob/pagespeed; sleep 10
     - curl --retry 10 --retry-delay 5 -v http://localhost
 
 deployment:

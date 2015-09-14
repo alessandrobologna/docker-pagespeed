@@ -17,7 +17,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -qq \
     && apt-get install -yqq build-essential libgd2-xpm-dev zlib1g-dev libpcre3 libpcre3-dev openssl libssl-dev libxslt-dev libgeoip-dev \
-    libpam0g-dev libperl-dev wget ca-certificates socat netcat memcached \
+    libpam0g-dev libperl-dev wget ca-certificates socat netcat memcached curl \
     varnish libvarnishapi-dev libvarnishapi1 automake autotools-dev libtool python-docutils
 
 RUN (wget -qO - https://github.com/pagespeed/ngx_pagespeed/archive/v1.9.32.6-beta.tar.gz | tar zxf  - -C /tmp --owner root --group root --no-same-owner) \

@@ -1,0 +1,12 @@
+BACKEND="www.realsimple.com"
+BACKENDS="cdn-js.realsimple.com cdn-css.realsimple.com cdn-image.realsimple.com"
+PROXY_DOMAINS="fonts.timeinc.net img.timeinc.net img5.timeinc.net tiads.timeinc.net tiads.realsimple.com \
+	www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net \
+	admin.brightcove.com speed.pointroll.com www.googletagservices.com www.googleadservices.com \
+	asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com cdn.tinypass.com"
+SERVER_NAME="app-accelerator-rs.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-rs.elasticbeanstalk.com"
+MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+

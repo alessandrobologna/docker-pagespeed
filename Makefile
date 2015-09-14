@@ -1,8 +1,51 @@
 SHELL := /bin/bash
-	
-%.zip: configs/%
-	@echo "Building configuration for Amazon Beanstalk $@"
-	@rm -f .ebextensions/* 
-	@mkdir -p .ebextensions && eval $$(cat $< | grep "=" | sed "s/^/export /g") && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' sample.config)\"")" > .ebextensions/$(@F).config
-	@zip -r $@ Dockerrun.aws.json .ebextensions
+VPATH=configs/eb
 
+ARGUMENT := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+$(eval $(ARGUMENT):;@:)
+
+checkarg:
+	@if [ -z "${ARGUMENT}" ]; then echo "missing required argument"; exit 1; fi
+	
+run: checkarg build
+	@echo "Starting  docker-compose for ${ARGUMENT}"
+	@eval $$(cat configs/local/${ARGUMENT} | cut -d '#' -f 1 |  awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' \
+	  | sed "s/^/export /g" | grep "=" ) \
+	  && docker ps -qa | xargs docker rm -fv && docker-compose up -d && docker-compose logs
+	
+build:
+	@echo "Building local docker-compose stack"
+	@docker-compose build
+	
+push: checkarg
+	@echo "Building and pushing images to docker hub ${ARGUMENT} repository"
+	@docker build -t ${ARGUMENT} docker/pagespeed
+	@docker push ${ARGUMENT}
+	
+
+# The following rules are for Elastic Beanstalk deployment
+%.zip: % 
+	@echo "Building configuration $< for Amazon Beanstalk"
+	@rm -rf target/$(<F)/.ebextensions 
+	@rm -f target/$(<F)/*.zip 
+	@mkdir -p target/$(<F)/.ebextensions
+	@echo -e "option_settings:\n$$(cat $< | cut -d '#' -f 1 | awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' | grep "=" | awk -F' *= *' '{print "  - option_name: "$$1"\n    value: "$$2'})" > target/$(<F)/.ebextensions/app.config
+	@cp Dockerrun.aws.json target/$(<F)/Dockerrun.aws.json
+	@cd target/$(<F) && zip -r app.zip Dockerrun.aws.json .ebextensions 
+
+# runs eb init
+init: checkarg 
+	@mkdir -p target/${ARGUMENT}
+	@if [ ! -f configs/eb/${ARGUMENT} ]; then  echo "missing ${ARGUMENT} in configs/eb, copying local"; cp configs/local/${ARGUMENT} configs/eb/${ARGUMENT}; fi
+	@cd target/${ARGUMENT} && git init && eb init
+
+# deploys the app to the specified environment	
+deploy: checkarg ${ARGUMENT}.zip
+	@echo "Deploying ${ARGUMENT} to Amazon Beanstalk"
+	@mkdir -p target/${ARGUMENT}
+	@cd target/${ARGUMENT} && git init && git add Dockerrun.aws.json .ebextensions app.zip && git commit -m "$$(date)" && eb deploy 
+
+logs: checkarg 
+	@cd target/${ARGUMENT} && eb logs
+
+		

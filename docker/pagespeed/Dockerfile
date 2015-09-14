@@ -1,6 +1,6 @@
 # fork from cook/nginx-pagespeed
 
-FROM ubuntu
+FROM debian:jessie
 MAINTAINER Alessandro Bologna <alessandro.bologna@gmail.com>
 
   
@@ -13,11 +13,13 @@ ENV DEBIAN_FRONTEND noninteractive
 # nginx-upstream-fair - master
 # ngx_http_substitutions_filter_module - 0.6.4
 # headers-more-nginx-module - v0.261
+# varnish libvmod-vsthrottle-1.0
 
 RUN apt-get update -qq \
-    && apt-get install -yqq build-essential libgd2-xpm-dev zlib1g-dev libpcre3 libpcre3-dev openssl libssl-dev libxslt-dev libgeoip-dev libpam0g-dev libperl-dev wget ca-certificates varnish 
+    && apt-get install -yqq build-essential libgd2-xpm-dev zlib1g-dev libpcre3 libpcre3-dev openssl libssl-dev libxslt-dev libgeoip-dev \
+    libpam0g-dev libperl-dev wget ca-certificates socat netcat memcached \
+    varnish libvarnishapi-dev libvarnishapi1 automake autotools-dev libtool python-docutils
 
-    
 RUN (wget -qO - https://github.com/pagespeed/ngx_pagespeed/archive/v1.9.32.6-beta.tar.gz | tar zxf  - -C /tmp --owner root --group root --no-same-owner) \
     && (wget -qO - https://dl.google.com/dl/page-speed/psol/1.9.32.6.tar.gz | tar zxf - -C /tmp/ngx_pagespeed-1.9.32.6-beta/ --owner root --group root --no-same-owner) \
     && (wget -qO - http://nginx.org/download/nginx-1.9.3.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
@@ -26,9 +28,13 @@ RUN (wget -qO - https://github.com/pagespeed/ngx_pagespeed/archive/v1.9.32.6-bet
     && (wget -qO - https://github.com/stogh/ngx_http_auth_pam_module/archive/v1.4.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
     && (wget -qO - https://github.com/gnosek/nginx-upstream-fair/archive/master.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
     && (wget -qO - https://github.com/yaoweibin/ngx_http_substitutions_filter_module/archive/v0.6.4.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
-    && (wget -qO - https://github.com/openresty/headers-more-nginx-module/archive/v0.261.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) 
+    && (wget -qO - https://github.com/openresty/headers-more-nginx-module/archive/v0.261.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
+    && (wget -qO - https://github.com/varnish/libvmod-vsthrottle/archive/v1.0.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) 
     
-RUN cd /tmp/nginx-1.9.3 \
+ 
+RUN cd /tmp/libvmod-vsthrottle-1.0 \
+	&& ./autogen.sh  && ./configure && make && make install \     
+    && cd /tmp/nginx-1.9.3 \
     && ./configure --with-cc-opt='-g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2' \
     --with-ld-opt='-Wl,-Bsymbolic-functions -Wl,-z,relro' --sbin-path=/usr/sbin/nginx --prefix=/usr/share/nginx --conf-path=/etc/nginx/nginx.conf \
     --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log --lock-path=/var/lock/nginx.lock \
@@ -46,28 +52,28 @@ RUN cd /tmp/nginx-1.9.3 \
     --add-module=/tmp/headers-more-nginx-module-0.261 \
     && make install \
     && rm -Rf /tmp/* \
-    && apt-get purge -yqq wget build-essential \
+    && apt-get purge -yqq wget build-essential automake autotools-dev libtool python-docutils \
     && apt-get autoremove -yqq \
     && apt-get clean
 
 RUN mkdir -p /var/lib/nginx
 RUN mkdir -p /var/lib/nginx/{body,fastcgi,proxy,scgi,uwsgi}
 
-VOLUME ["/etc/nginx/sites-enabled","/var/cache/nginx","/var/ngx_pagespeed_cache","/var/log/nginx"]
+VOLUME ["/etc/nginx/sites-enabled","/var/cache/nginx","/var/ngx_pagespeed_cache","/var/log/nginx","/var/log/pagespeed"]
 WORKDIR /etc/nginx/
 
-# Configure nginx
-RUN chmod 777 /var/ngx_pagespeed_cache
-ADD pagespeed/nginx.conf /etc/nginx/nginx.conf
-ADD pagespeed/sites-enabled /etc/nginx/sites-enabled
-
-
+ADD nginx.conf /etc/nginx/nginx.conf
+ADD sites-enabled /etc/nginx/sites-enabled
+ADD robots.txt /usr/share/nginx/html/robots.txt
 EXPOSE 80
 
 # add template for varnish
-ADD pagespeed/varnish/template /etc/varnish/
+ADD varnish/template /etc/varnish/
 
-ADD pagespeed/start /start
+ADD start /start
 RUN chmod +x /start
+
+
+
 ENTRYPOINT ["/start"]
 

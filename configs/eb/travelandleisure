@@ -1,0 +1,14 @@
+BACKEND="www.travelandleisure.com"
+PROXY_DOMAINS="www.travelandleisure.com/sites fonts.timeinc.net img.timeinc.net img2.timeinc.net img2-1.timeinc.net img5.timeinc.net \
+	tiads.timeinc.net tiads.travelandleisure.com \
+	www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net admin.brightcove.com speed.pointroll.com \
+	www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com \
+	tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com \
+	cdn.api.onebot.timeinc.com cdn.media.content.onebot.timeinc.com cdn.tinypass.com"
+SERVER_NAME="app-accelerator-tl.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-tl.elasticbeanstalk.com"
+MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+COOKIES="TI_PREFS"
+FILTERS_ENABLED="defer_javascript inline_preview_images resize_mobile_images lazyload_images"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"

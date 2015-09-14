@@ -1,13 +1,20 @@
-# from https://github.com/dreamsxin/modpagespeed/blob/master/src/install/debug_conf.vcl
-# also add also purge + restart support with https://www.varnish-software.com/book/3/Saving_a_request.html
-
+# device detection from https://github.com/dreamsxin/modpagespeed/blob/master/src/install/debug_conf.vcl
+vcl 4.0;
 import std;
+import vsthrottle;
 
 # Block 1: Define upstream server's host and port.
 backend default {
   # Location of PageSpeed server.
   .host = "127.0.0.1";
   .port = "8080";
+  .probe = {
+    .url = "${HEALTCHECK:-/}";
+    .timeout = 60s;
+    .interval = 60s;
+    .window = 1;
+    .threshold = 1;
+   }
 }
 
 # Block 2: Define a key based on the User-Agent which can be used for hashing.
@@ -54,75 +61,90 @@ sub generate_user_agent_based_key {
     if (req.http.User-Agent ~ "(?i)Mozilla.*Android.*Mobile*|iPhone|BlackBerry|Opera Mobi|Opera Mini|SymbianOS|UP.Browser|J-PHONE|Profile/MIDP|portalmmm|DoCoMo|Obigo|Galaxy Nexus|GT-I9300|GT-N7100|HTC One|Nexus [4|7|S]|Xoom|XT907") {
       set req.http.PS-CapabilityList = req.http.default_ps_capability_list_for_small_screens;
     }
-    # Remove placeholder header values.
-    remove req.http.default_ps_capability_list_for_large_screens;
-    remove req.http.default_ps_capability_list_for_small_screens;
+    # unset placeholder header values.
+    unset req.http.default_ps_capability_list_for_large_screens;
+    unset req.http.default_ps_capability_list_for_small_screens;
 }
 
 sub vcl_hash {
   # Block 3: Use the PS-CapabilityList value for computing the hash.
   hash_data(req.http.PS-CapabilityList);
+  hash_data(req.http.Cookie);
 }
 
 # Block 3a: Define ACL for purge requests
-acl purge {
+acl local {
   # Purge requests are only allowed from localhost.
   "localhost";
   "127.0.0.1";
 }
 
-# Block 3b: Issue purge when there is a cache hit for the purge request.
+sub pass_if_beacon {
+  if (req.http.PS-ShouldBeacon == "${SECRET_KEY}") {
+    return (pass);
+  }
+}
+
 sub vcl_hit {
-  if (req.request == "PURGE") {
-    purge;
-    set req.request = "GET";
-    set req.http.X-purger = "Purged";
-    error 800 "restart";
-  } else {
-    # Send 5% of the HITs to the backend for instrumentation.
-    if (std.random(0, 100) <= 5) {
-      set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
-      return (pass);
-    }
+  // Send 5% of the HITs to the backend for instrumentation.
+  if (req.http.Content-Type ~ "text/html" && std.random(0, 100) <= 5) {
+    set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
   }
+  
+  if (obj.ttl >= 0s) {
+    // A pure unadultered hit, deliver it or pass it 
+    call pass_if_beacon;
+    return (deliver);
+  }
+  
+  if (obj.ttl + obj.grace > 0s) {
+    // Object is in grace, deliver it and automatically triggers a background fetch or pass it
+    set req.http.Page-Speed-Grace = "Yes";
+    call pass_if_beacon;
+    return (deliver);
+  }
+  
+  // object is not graced anymore, fetch & deliver once we get the result
+  call pass_if_beacon;
+  return (fetch);
 }
 
-# Block 3c: Issue a no-op purge when there is a cache miss for the purge
-# request.
 sub vcl_miss {
-  if (req.request == "PURGE") {
-     purge;
-     set req.request = "GET";
-     set req.http.X-purger = "Purged-possibly";
-     error 800 "restart";    # cant restart in miss, yet. go via error
-  } else {
-    # Send 25% of the MISSes to the backend for instrumentation.
-    if (std.random(0, 100) <= 25) {
-      set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
-      return (pass);
-    }
+  // Send 25% of the MISSes to the backend for instrumentation.
+  if (std.random(0, 100) <= 25) {
+    set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
+    return (pass);
   }
+  return (fetch);
 }
 
-sub vcl_error {
-  if (obj.status == 800 ) {
-    return(restart);
-  }
-}
-
-sub vcl_pass {
-  if (req.request == "PURGE") {
-    error 502 "PURGE on a passed object";
-  }
+# invoked after purge, restart the request as a GET request
+sub vcl_purge {
+  // restart request
+  set req.method = "GET";
+  return (restart);
 }
 
 # Block 4: In vcl_recv, on receiving a request, call the method responsible for
 # generating the User-Agent based key for hashing into the cache.
 sub vcl_recv {
- if (req.restarts == 0) {
-     unset req.http.X-purger;
+  
+  // determine a client identity based on the X-Forwarded-For header, and fallback to the ip
+  set client.identity = std.ip(regsub(req.http.X-Forwarded-For, "[, ].*$", ""), client.ip);
+  
+  if (vsthrottle.is_denied(client.identity, ${MAX_REQUESTS:-100}, 1s)) {
+    // Client has exceeded the allowed number of requests
+    return (synth(429, "Too Many Requests, please slow down"));
   }
-
+  
+  
+  // add a flag to determine if the request is local, coming from pagespeed
+  if (client.ip ~ local) {
+    set req.http.X-Local="Yes";
+  } else {
+    set req.http.Host = "${SERVER_NAME}";
+  }
+  
   if (req.http.Cookie) {
     set req.http.Cookie = ";" + req.http.Cookie;
     set req.http.Cookie = regsuball(req.http.Cookie, "; +", ";");
@@ -131,7 +153,7 @@ sub vcl_recv {
     set req.http.Cookie = regsuball(req.http.Cookie, "^[; ]+|[; ]+$", "");
 
     if (req.http.Cookie == "") {
-        remove req.http.Cookie;
+        unset req.http.Cookie;
     }
   }
 
@@ -149,60 +171,75 @@ sub vcl_recv {
     
   # Incoming PS-ShouldBeacon headers should not be allowed since this will allow
   # external entities to force the server to instrument pages.
-  remove req.http.PS-ShouldBeacon;
+  unset req.http.PS-ShouldBeacon;
 
   # Block 3d: Verify the ACL for an incoming purge request and handle it.
-  if (req.request == "PURGE") {
-    if (!client.ip ~ purge) {
-      error 405 "Not allowed.";
+  if (req.method == "PURGE") {
+    if (!client.ip ~ local) {
+      return (synth(405,"Not allowed."));
     }
-    return (lookup);
+    return (purge);
   }
-  # Blocks which decide whether cache should be bypassed or not go here.
-  # Block 5a: Bypass the cache for .pagespeed. resource. PageSpeed has its own
-  # cache for these, and these could bloat up the caching layer.
-  # if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
-    # Skip the cache for .pagespeed. resource.  PageSpeed has its own
-    # cache for these, and these could bloat up the caching layer.
-    # return (pass);
-  # }
-  # Block 5b: Only cache responses to clients that support gzip.  Most clients
-  # do, and the cache holds much more if it stores gzipped responses.
-  # if (req.http.Accept-Encoding !~ "gzip") {
-    # return (pass);
-  # }
+  set req.http.Page-Speed-Grace = "No";
+  return (hash);
 }
 
-# Block 6: remove upstream cache control and varnish headers
-sub vcl_fetch {
-   if (beresp.http.Content-Type ~ "text/html") {
-     # Hide the upstream cache control headers.
-     remove beresp.http.ETag;
-     remove beresp.http.Last-Modified;
-     remove beresp.http.Cache-Control;
-     remove beresp.http.X-Cache;
-     remove beresp.http.X-Age;
-     remove beresp.http.X-Varnish-Cache;
-     remove beresp.http.X-Varnish-Cache-Hits;
-     remove beresp.http.X-Varnish;
-     
-     set beresp.http.Cache-Control = "no-cache, max-age=0";
-   }
-   return (deliver);
+# Block 6: unset upstream cache control and varnish headers
+sub vcl_backend_response {
+  if (bereq.http.X-Local=="Yes" && bereq.url ~ "\.(png|gif|jpg|swf|css|js|ico|woff|ttf)$" ) {
+    // the request is coming from MapOriginDomain and is for a static resource, do some header cleanup
+    unset beresp.http.Expires;
+    unset beresp.http.Set-Cookie;
+    unset beresp.http.Pragma;
+    if (beresp.http.Cache-Control ~ "max-age=0|private|no-cache|no-store") {
+      set beresp.http.Cache-Control = "max-age=3600";
+    }
+    if (beresp.http.Vary == "*") {
+      unset beresp.http.Vary;
+    }
+    set beresp.http.X-Cleaned="Yes";
+    return (deliver);
+  }
+  if (beresp.http.Content-Type ~ "text/html") {
+    // Hide the upstream cache control headers.
+    unset beresp.http.ETag;
+    unset beresp.http.Last-Modified;
+    unset beresp.http.Cache-Control;
+    unset beresp.http.Expires;
+    unset beresp.http.Via;
+    unset beresp.http.X-Cache;
+    unset beresp.http.X-Age;
+    unset beresp.http.X-Varnish;
+    unset beresp.http.X-Varnish-Cache;
+    unset beresp.http.X-Varnish-Cache-Hits;
+    unset beresp.http.X-Varnish;
+    set beresp.http.Cache-Control = "no-cache, max-age=0";
+  } else if (!beresp.http.Cache-Control ~ "max-age") {
+     // add a customizable caching header for resources that specify none
+     set beresp.http.Cache-Control = "max-age=${MAX_AGE:-300}";
+  }
+  // grace every object for one hour (override with GRACE)
+  set beresp.grace = ${GRACE:-1h};
+  return (deliver);
 }
 
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
-  set resp.http.PS-CapabilityList = req.http.PS-CapabilityList;
-  set resp.http.X-Page-Speed-Age = resp.http.Age;
-  if (req.http.X-purger) {
-    set resp.http.X-purger = req.http.X-purger;
+  if (req.http.X-Local=="Yes") {
+    // it's a response for MapOriginDomain, no need to add extra headers
+    return (deliver);
   }
+  // tell downstream caches to cache based on the encoding and the device detection
+  set resp.http.Vary = "Page-Speed-Device, Accept-Encoding";
+  set resp.http.Page-Speed-Device = req.http.PS-CapabilityList;
   if (obj.hits > 0) {
-    set resp.http.X-Page-Speed-Cache = "HIT";
-    # add a configurable extension to the ttl for other caches
-    set resp.http.Cache-Control="public, max-age: ${MAX_AGE:-300}";
+    set resp.http.Page-Speed-Cache = "HIT";
+    # add a configurable extension to the ttl for downstream caches
+    if (resp.http.Cache-Control ~ "max-age=0") {
+      set resp.http.Cache-Control="public, max-age=${MAX_AGE:-300}";
+    }
   } else {
-    set resp.http.X-Page-Speed-Cache = "MISS";
+    set resp.http.Page-Speed-Cache = "MISS";
   }
+  return (deliver);
 }

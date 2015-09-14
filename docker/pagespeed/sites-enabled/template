@@ -1,22 +1,24 @@
+resolver 8.8.8.8;
 pagespeed ForceCaching on;
 pagespeed FetchWithGzip on;
 pagespeed UseNativeFetcher on;
 pagespeed FetchHttps enable;
 pagespeed RateLimitBackgroundFetches off;
 
-resolver 8.8.8.8;
 pagespeed GlobalAdminPath /pagespeed_global_admin;
 pagespeed GlobalStatisticsPath /ngx_pagespeed_global_statistics;
-pagespeed DownstreamCachePurgeLocationPrefix http://localhost:80;
 pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
 pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
+pagespeed EnableCachePurge on;
+pagespeed MessageBufferSize 100000;
 
-${MEMCACHED_SERVERS}
+
+pagespeed MemcachedServers "${MEMCACHED_ADDR}:11211";
 
 server {
 	listen 8080;
 	
-	server_name ${SERVER_NAME:-localhost} 
+	server_name ${SERVER_NAME} ${BACKEND} 127.0.0.1;
 
 	pagespeed on;
 
@@ -27,16 +29,15 @@ server {
 
 
 	# admin handlers
-	location /ngx_pagespeed_statistics {  }
-	location /ngx_pagespeed_global_statistics {  }
-	location /ngx_pagespeed_message {  }
-	location /pagespeed_console {  }
 	location ~ ^/pagespeed_admin {  }
-	location ~ ^/pagespeed_global_admin {  }
 
-	pagespeed StatisticsPath /ngx_pagespeed_statistics;
-	pagespeed MessagesPath /ngx_pagespeed_message;
-	pagespeed ConsolePath /pagespeed_console;
+	pagespeed Statistics on;
+	pagespeed StatisticsLogging on;
+	pagespeed LogDir /var/log/pagespeed;
+	
+	pagespeed StatisticsLoggingIntervalMs 60000;
+	pagespeed StatisticsLoggingMaxFileSizeKb 102400;
+
 	pagespeed AdminPath /pagespeed_admin;
 	
 	# Ensure requests for pagespeed optimized resources go to the pagespeed handler
@@ -46,59 +47,69 @@ server {
 	}
 	location ~ "^/pagespeed_static/" { }
 	location ~ "^/ngx_pagespeed_beacon$" { }
-	
-  
-	pagespeed UseExperimentalJsMinifier on;
-	pagespeed AvoidRenamingIntrospectiveJavascript off;
-	
+
 	pagespeed PreserveUrlRelativity on;
 	pagespeed InPlaceResourceOptimization on;
-	pagespeed ImplicitCacheTtlMs 3600000;
 	
 	pagespeed DisableRewriteOnNoTransform off;
 	pagespeed UrlValuedAttribute img data-src image;
+	pagespeed UrlValuedAttribute img data-original image;
 	pagespeed UrlValuedAttribute a data-src image;
-	pagespeed EnableFilters extend_cache;
 	pagespeed DomainRewriteHyperlinks on;
 	pagespeed InlineResourcesWithoutExplicitAuthorization Script,Stylesheet;
-	pagespeed EnableFilters prioritize_critical_css;
-		
+	
 	pagespeed EnableFilters rewrite_domains;
+	pagespeed EnableFilters extend_cache;
 	pagespeed EnableFilters move_css_to_head,move_css_above_scripts;
+	pagespeed EnableFilters prioritize_critical_css;
+	pagespeed EnableFilters rewrite_style_attributes_with_url;		
 	pagespeed EnableFilters collapse_whitespace;
-	pagespeed EnableFilters inline_preview_images,resize_mobile_images,lazyload_images;
 	pagespeed EnableFilters trim_urls;
 	
+	
+	
+${ENABLED_FILTERS}
+
+${DISABLED_FILTERS}
+
+${ON_FILTERS}
+
+${OFF_FILTERS}
+
+${CUSTOM_SETTINGS}
+
 	pagespeed Domain ${FRONTEND};
 	pagespeed Domain ${BACKEND};
-	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
+
 
 ${MAP_BACKENDS}
 	
 ${MAP_PROXY_DOMAINS}
+
+${MAP_PROXY_HTTPS_DOMAINS}
 	
+    pagespeed MapOriginDomain 127.0.0.1/ ${BACKEND};
+	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
+
+
 	location ~^/proxy/(?<domain>[^/]+)/ {
 		rewrite ^/proxy/[^/]+/(.*) /\$1 break;
 		proxy_pass  http://\$domain;
+		proxy_set_header Referer  http://\$domain;
 		proxy_read_timeout 10s;
 		proxy_http_version 1.1;
-		proxy_hide_header Vary;
-		proxy_hide_header Expires;
-		proxy_hide_header Cache-Control;
-		proxy_hide_header Last-Modified;
-		proxy_hide_header Pragma;
 	}
 			
 	location / {
-	
 		proxy_pass http://${BACKEND:-127.0.0.1:8080};
+		proxy_set_header Referer  http://${BACKEND:-127.0.0.1:8080};
+		proxy_redirect ~^/(.+)$ ${FRONTEND}/\$1;
 		proxy_read_timeout 10s;
 		proxy_http_version 1.1;
 		proxy_hide_header Vary;
-		proxy_hide_header Expires;
-		proxy_hide_header Cache-Control;
-		proxy_hide_header Last-Modified;
-		proxy_hide_header Pragma;
-
+	}
+	
+	location /robots.txt {
+		alias /usr/share/nginx/html/robots.txt;
 	}
 }

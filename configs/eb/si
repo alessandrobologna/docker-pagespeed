@@ -1,0 +1,16 @@
+BACKEND="www.si.com"
+PROXY_DOMAINS="www.si.com/sites cdn-css.si.com cdn-jpg.si.com cdn-png.si.com cdn-js.si.com \
+	img.timeinc.net img5.timeinc.net tiads.timeinc.net www5.timeinc.net subscription-assets.timeinc.com \
+	js.revsci.net pq-direct.revsci.net admin.brightcove.com speed.pointroll.com www.googletagservices.com asset.pagefair.com \
+	platform.twitter.com sportsillustrated.ep.livefyre.com ui.bamstatic.com \
+	tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com static.chartbeat.com native.sharethrough.com zor.livefyre.com"
+PROXY_HTTPS_DOMAINS="apis.google.com www.googleadservices.com"
+SERVER_NAME="app-accelerator-si.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-si.elasticbeanstalk.com"
+MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+COOKIES="TI_PREFS"
+HEALTCHECK="/"
+FILTERS_ENABLED="defer_javascript sprite_images inline_preview_images resize_mobile_images"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+

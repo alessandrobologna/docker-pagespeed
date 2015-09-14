@@ -1,13 +1,26 @@
 pagespeed:
-  build: .
+  build: docker/pagespeed
   environment:
-    SECRET_KEY:
     COOKIES:
     BACKEND:
     BACKENDS:
     FRONTEND:
     SERVER_NAME:
     PROXY_DOMAINS:
+    PROXY_HTTPS_DOMAINS:
+    FILTERS_ON:
+    FILTERS_OFF:
+    FILTERS_ENABLED:
+    FILTERS_DISABLED:
+    CUSTOM_SETTINGS:
     MEMCACHED:
+    MEMCACHED_SIZE:
+    MAX_REQUESTS:
+    HEALTCHECK:
+    GRACE:
   ports:
    - "80:80"
+   - "8080:8080"
+  volumes:
+   - /app/ngx_pagespeed_cache:/var/ngx_pagespeed_cache
+   

@@ -1,0 +1,15 @@
+BACKEND="time.com"
+PROXY_DOMAINS="i1.wp.com fonts.timeinc.net img.timeinc.net img2.timeinc.net img2-1.timeinc.net img5.timeinc.net \
+	tiads.timeinc.net tiads.time.com www5.timeinc.net subscription-assets.timeinc.com js.revsci.net \
+	pq-direct.revsci.net admin.brightcove.com speed.pointroll.com www.googletagservices.com \
+	www.googleadservices.com asset.pagefair.com platform.twitter.com apis.google.com \
+	ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com cdn.media.content.onebot.timeinc.com cdn.tinypass.com"
+PROXY_HTTPS_DOMAINS="s0.wp.com s1.wp.com s2.wp.com"
+SERVER_NAME="app-accelerator-time.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-time.elasticbeanstalk.com"
+MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+COOKIES="TI_PREFS"
+FILTERS_ENABLED="inline_preview_images resize_mobile_images"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+

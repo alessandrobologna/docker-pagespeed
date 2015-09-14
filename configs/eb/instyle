@@ -3,8 +3,8 @@ BACKENDS="*.instyle.com"
 PROXY_DOMAINS="img.timeinc.net img5.timeinc.net tiads.timeinc.net fonts.timeinc.net \
 	www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net \
 	speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com sportsillustrated.ep.livefyre.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com"
-SERVER_NAME="http://app-accelerator-instyle.elasticbeanstalk.com/"
-FRONTEND="http://http://app-accelerator-instyle.elasticbeanstalk.com/"
+SERVER_NAME="app-accelerator-instyle.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-instyle.elasticbeanstalk.com/"
 MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
 FILTERS_ENABLED="defer_javascript inline_preview_images resize_mobile_images lazyload_images"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"

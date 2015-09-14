@@ -18,7 +18,7 @@ pagespeed MemcachedServers "${MEMCACHED_ADDR}:11211";
 server {
 	listen 8080;
 	
-	server_name ${SERVER_NAME} ${BACKEND} 127.0.0.1;
+	server_name ${SERVER_NAME} ${BACKEND} ${PROXY_HTTPS_DOMAINS} ${PROXY_DOMAINS} ${BACKENDS} 127.0.0.1 localhost;
 
 	pagespeed on;
 
@@ -88,7 +88,7 @@ ${MAP_PROXY_DOMAINS}
 
 ${MAP_PROXY_HTTPS_DOMAINS}
 	
-    pagespeed MapOriginDomain 127.0.0.1/ ${BACKEND};
+    pagespeed MapOriginDomain 127.0.0.1/ ${BACKEND} ${BACKEND};
 	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
 
 

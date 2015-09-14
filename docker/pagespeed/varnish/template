@@ -186,7 +186,7 @@ sub vcl_recv {
 
 # Block 6: unset upstream cache control and varnish headers
 sub vcl_backend_response {
-  if (bereq.http.X-Local=="Yes" && bereq.url ~ "\.(png|gif|jpg|swf|css|js|ico|woff|ttf)$" ) {
+  if (bereq.http.X-Local=="Yes" && bereq.url ~ "\.(png|gif|jpg|swf|css|js|ico|woff|ttf|svg)(\?.+)?$" ) {
     // the request is coming from MapOriginDomain and is for a static resource, do some header cleanup
     unset beresp.http.Expires;
     unset beresp.http.Set-Cookie;

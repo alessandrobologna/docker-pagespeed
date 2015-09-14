@@ -6,6 +6,6 @@ PROXY_DOMAINS="fonts.timeinc.net img.timeinc.net img5.timeinc.net tiads.timeinc.
 	asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com cdn.tinypass.com"
 SERVER_NAME="192.168.99.100"
 FRONTEND="http://192.168.99.100"
-FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ENABLED="debug sprite_images inline_preview_images resize_mobile_images"
 FILTERS_ON="UseExperimentalJsMinifier"
-
+FILTERS_DISABLED="combine_javascript"

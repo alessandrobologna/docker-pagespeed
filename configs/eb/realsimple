@@ -7,6 +7,7 @@ PROXY_DOMAINS="fonts.timeinc.net img.timeinc.net img5.timeinc.net tiads.timeinc.
 SERVER_NAME="app-accelerator-rs.elasticbeanstalk.com"
 FRONTEND="http://app-accelerator-rs.elasticbeanstalk.com"
 MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
-FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ENABLED="sprite_images inline_preview_images resize_mobile_images"
 FILTERS_ON="UseExperimentalJsMinifier"
+FILTERS_DISABLED="combine_javascript"
 

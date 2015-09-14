@@ -132,7 +132,7 @@ sub vcl_recv {
   // determine a client identity based on the X-Forwarded-For header, and fallback to the ip
   set client.identity = std.ip(regsub(req.http.X-Forwarded-For, "[, ].*$", ""), client.ip);
   
-  if (vsthrottle.is_denied(client.identity, ${MAX_REQUESTS:-100}, 1s)) {
+  if (vsthrottle.is_denied(client.identity, ${MAX_REQUESTS:-256}, 1s)) {
     // Client has exceeded the allowed number of requests
     return (synth(429, "Too Many Requests, please slow down"));
   }

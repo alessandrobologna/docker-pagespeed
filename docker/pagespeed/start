@@ -6,6 +6,11 @@ rm -f /etc/nginx/sites-enabled/default
 # determine available memory:
 MEMORY_MB=$(($(grep MemTotal /proc/meminfo | awk '{print $2}') / 1024))
 
+# set FRONTEND
+if [ -z $FRONTEND ]
+then 
+	FRONTEND=http://${SERVER_NAME}
+fi
 
 # maybe build backends
 MAP_BACKENDS=$(for backend in ${BACKENDS}
@@ -18,7 +23,7 @@ done)
 MAP_PROXY_DOMAINS=$(for domain in ${PROXY_DOMAINS}
 do
 #	echo -e "\tpagespeed Domain ${domain};"
-	echo -e "\tpagespeed MapOriginDomain 127.0.0.1/proxy/${domain} ${domain} ${domain};"
+	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/proxy/${domain} ${domain};"
 	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND}/proxy/${domain} ${domain};"
 done)
 
@@ -26,7 +31,7 @@ done)
 MAP_PROXY_HTTPS_DOMAINS=$(for domain in ${PROXY_HTTPS_DOMAINS}
 do
 #	echo -e "\tpagespeed Domain ${domain};"
-	echo -e "\tpagespeed MapOriginDomain 127.0.0.1/proxy/${domain} https://${domain} ${domain}; "
+	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/proxy/${domain} https://${domain}; "
 	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND}/proxy/${domain} https://${domain};"
 done)
 
@@ -34,7 +39,11 @@ done)
 ENABLED_FILTERS=$(for filter in ${FILTERS_ENABLED}
 do
 	echo -e "\tpagespeed EnableFilters ${filter};"
-done)
+done
+if [ -n "${DEBUG}" ]
+then
+	echo -e "\tpagespeed EnableFilters debug;"
+fi)
 
 DISABLED_FILTERS=$(for filter in ${FILTERS_DISABLED}
 do
@@ -44,13 +53,19 @@ done)
 ON_FILTERS=$(for filter in ${FILTERS_ON}
 do
 	echo -e "\tpagespeed ${filter} on;"
-done)
+done
+)
 
 OFF_FILTERS=$(for filter in ${FILTERS_OFF}
 do
 	echo -e "\tpagespeed ${filter} off;"
 done)
 
+DEBUG_HEADERS=$(if [ -n "${DEBUG}" ]
+then
+	 echo "set req.http.Page-Speed-Debug=\"Yes\";"
+fi)
+	
 # configure memcache: if MEMCACHED is not provided or not reachable start a local node
 MEMCACHED_ADDR="${MEMCACHED:-127.0.0.1}"
 if ! nc -z -w5 "${MEMCACHED_ADDR}" 11211
@@ -62,6 +77,17 @@ fi
 # generate a random string for the secret beaconing key
 SECRET_KEY=$(dd if=/dev/urandom bs=256 count=1 2>/dev/null | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
+SET_HEADER_MOBILE=$(if [ -n "${IF_MOBILE}" ]
+then
+	IFS=':; ' read -a split <<< "${IF_MOBILE}"
+	echo "unset bereq.http.${split[0]}; set bereq.http.${split[0]}=\"${split[1]}\";"
+fi)
+
+SET_HEADER_DESKTOP=$(if [ -n "${IF_DESKTOP}" ]
+then
+	IFS=':; ' read -a split <<< "${IF_DESKTOP}"
+	echo "unset bereq.http.${split[0]}; set bereq.http.${split[0]}=\"${split[1]}\";"
+fi)
 
 # replace env variables in template
 echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' /etc/nginx/sites-enabled/template)\"")" >  /etc/nginx/sites-enabled/default.conf

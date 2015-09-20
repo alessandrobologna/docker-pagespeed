@@ -11,5 +11,9 @@ COOKIES="TI_PREFS"
 FILTERS_ENABLED="defer_javascript inline_preview_images resize_mobile_images lazyload_images"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
+	pagespeed ImplicitCacheTtlMs 3600000; \
+	pagespeed InPlaceRewriteDeadlineMs 30000; \
+	pagespeed RewriteDeadlinePerFlushMs 30000;"
 
 

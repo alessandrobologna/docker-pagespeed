@@ -62,18 +62,18 @@ RUN mkdir -p /var/lib/nginx/{body,fastcgi,proxy,scgi,uwsgi}
 VOLUME ["/etc/nginx/sites-enabled","/var/cache/nginx","/var/ngx_pagespeed_cache","/var/log/nginx","/var/log/pagespeed"]
 WORKDIR /etc/nginx/
 
-ADD nginx.conf /etc/nginx/nginx.conf
-ADD sites-enabled /etc/nginx/sites-enabled
-ADD robots.txt /usr/share/nginx/html/robots.txt
+ADD nginx.conf /etc/nginx/
+ADD sites-enabled /etc/nginx/
+ADD robots.txt /usr/share/nginx/html/
 EXPOSE 80
 
 # add template for varnish
 ADD varnish/template /etc/varnish/
+ADD varnish/devicedetect.vcl /etc/varnish/
+ADD varnish/useragent-key.vcl /etc/varnish/
 
 ADD start /start
 RUN chmod +x /start
-
-
 
 ENTRYPOINT ["/start"]
 

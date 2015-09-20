@@ -12,4 +12,8 @@ MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
 FILTERS_ENABLED="inline_preview_images resize_mobile_images"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
+	pagespeed ImplicitCacheTtlMs 3600000; \
+	pagespeed InPlaceRewriteDeadlineMs 30000; \
+	pagespeed RewriteDeadlinePerFlushMs 30000;"
 

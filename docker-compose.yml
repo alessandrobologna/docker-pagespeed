@@ -17,7 +17,12 @@ pagespeed:
     MEMCACHED_SIZE:
     MAX_REQUESTS:
     HEALTCHECK:
+    TTL:
     GRACE:
+    S_MAXAGE:
+    DEBUG:
+    IF_DESKTOP:
+    IF_MOBILE:
   ports:
    - "80:80"
    - "8080:8080"

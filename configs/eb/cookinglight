@@ -4,12 +4,20 @@ PROXY_DOMAINS="img1.cookinglight.com img2.cookinglight.com img3.cookinglight.com
 		js.cookinglight.timeinc.net css.cookinglight.timeinc.net \
 		fonts.timeinc.net img.timeinc.net img2.timeinc.net img2-1.timeinc.net img5.timeinc.net tiads.timeinc.net tiads.cookinglight.com \
 		www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net admin.brightcove.com \
-		speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com cdn.media.content.onebot.timeinc.com cdn.tinypass.com"
+		speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com \
+		platform.twitter.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com \
+		widgets.outbrain.com cdn.api.onebot.timeinc.com cdn.media.content.onebot.timeinc.com cdn.tinypass.com \
+		edge.quantserve.com pagead2.googlesyndication.com s.skimresources.com native.sharethrough.com \
+		static.cookinglight.timeinc.net data.actnx.com googleads.g.doubleclick.net"
 SERVER_NAME="app-accelerator-cl.elasticbeanstalk.com"
 FRONTEND="http://app-accelerator-cl.elasticbeanstalk.com"
 MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
-COOKIES="TI_PREFS"
-FILTERS_ENABLED="defer_javascript inline_preview_images resize_mobile_images lazyload_images"
+FILTERS_ENABLED="inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
+	convert_to_webp_lossless resize_rendered_image_dimensions"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
+	pagespeed ImplicitCacheTtlMs 3600000; \
+	pagespeed InPlaceRewriteDeadlineMs 30000; \
+	pagespeed RewriteDeadlinePerFlushMs 30000;"
 

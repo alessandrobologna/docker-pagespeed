@@ -18,7 +18,7 @@ pagespeed MemcachedServers "${MEMCACHED_ADDR}:11211";
 server {
 	listen 8080;
 	
-	server_name ${SERVER_NAME} ${BACKEND} ${PROXY_HTTPS_DOMAINS} ${PROXY_DOMAINS} ${BACKENDS} 127.0.0.1 localhost;
+	server_name ${SERVER_NAME} ${BACKEND} 127.0.0.1 localhost;
 
 	pagespeed on;
 
@@ -47,14 +47,12 @@ server {
 	}
 	location ~ "^/pagespeed_static/" { }
 	location ~ "^/ngx_pagespeed_beacon$" { }
-
+	
 	pagespeed PreserveUrlRelativity on;
 	pagespeed InPlaceResourceOptimization on;
 	
 	pagespeed DisableRewriteOnNoTransform off;
 	pagespeed UrlValuedAttribute img data-src image;
-	pagespeed UrlValuedAttribute img data-original image;
-	pagespeed UrlValuedAttribute a data-src image;
 	pagespeed DomainRewriteHyperlinks on;
 	pagespeed InlineResourcesWithoutExplicitAuthorization Script,Stylesheet;
 	
@@ -64,7 +62,6 @@ server {
 	pagespeed EnableFilters prioritize_critical_css;
 	pagespeed EnableFilters rewrite_style_attributes_with_url;		
 	pagespeed EnableFilters collapse_whitespace;
-	pagespeed EnableFilters trim_urls;
 	
 	
 	
@@ -81,6 +78,8 @@ ${CUSTOM_SETTINGS}
 	pagespeed Domain ${FRONTEND};
 	pagespeed Domain ${BACKEND};
 
+    pagespeed MapOriginDomain 127.0.0.1:8080 ${BACKEND};
+	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
 
 ${MAP_BACKENDS}
 	
@@ -88,16 +87,19 @@ ${MAP_PROXY_DOMAINS}
 
 ${MAP_PROXY_HTTPS_DOMAINS}
 	
-    pagespeed MapOriginDomain 127.0.0.1/ ${BACKEND} ${BACKEND};
-	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
-
-
 	location ~^/proxy/(?<domain>[^/]+)/ {
 		rewrite ^/proxy/[^/]+/(.*) /\$1 break;
 		proxy_pass  http://\$domain;
 		proxy_set_header Referer  http://\$domain;
 		proxy_read_timeout 10s;
 		proxy_http_version 1.1;
+		proxy_hide_header Vary;
+		proxy_hide_header Expires;
+		proxy_hide_header Cache-Control;
+		proxy_hide_header Last-Modified;
+		proxy_hide_header Pragma;
+		proxy_hide_header ETag;
+		proxy_hide_header Set-Cookie;
 	}
 			
 	location / {
@@ -107,6 +109,12 @@ ${MAP_PROXY_HTTPS_DOMAINS}
 		proxy_read_timeout 10s;
 		proxy_http_version 1.1;
 		proxy_hide_header Vary;
+		proxy_hide_header Expires;
+		proxy_hide_header Cache-Control;
+		proxy_hide_header Last-Modified;
+		proxy_hide_header Pragma;
+		proxy_hide_header ETag;
+		proxy_hide_header Set-Cookie;
 	}
 	
 	location /robots.txt {

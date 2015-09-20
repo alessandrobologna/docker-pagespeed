@@ -1,7 +1,10 @@
-# device detection from https://github.com/dreamsxin/modpagespeed/blob/master/src/install/debug_conf.vcl
 vcl 4.0;
 import std;
 import vsthrottle;
+include "devicedetect.vcl";
+# following includes are disabled (as they are not needed now)
+# include "useragent-key.vcl";
+
 
 # Block 1: Define upstream server's host and port.
 backend default {
@@ -11,65 +14,24 @@ backend default {
   .probe = {
     .url = "${HEALTCHECK:-/}";
     .timeout = 60s;
-    .interval = 60s;
+    .interval = 30s;
     .window = 1;
     .threshold = 1;
    }
 }
 
-# Block 2: Define a key based on the User-Agent which can be used for hashing.
-# Also set the PS-CapabilityList header for PageSpeed server to respect.
-sub generate_user_agent_based_key {
-    # Define placeholder PS-CapabilityList header values for large and small
-    # screens with no UA dependent optimizations. Note that these placeholder
-    # values should not contain any of ll, ii, dj, jw or ws, since these
-    # codes will end up representing optimizations to be supported for the
-    # request.
-    set req.http.default_ps_capability_list_for_large_screens = "LargeScreen.SkipUADependentOptimizations:";
-    set req.http.default_ps_capability_list_for_small_screens = "TinyScreen.SkipUADependentOptimizations:";
 
-    # As a fallback, the PS-CapabilityList header that is sent to the upstream
-    # PageSpeed server should be for a large screen device with no browser
-    # specific optimizations.
-    set req.http.PS-CapabilityList = req.http.default_ps_capability_list_for_large_screens;
-
-    # Cache-fragment 1: Desktop User-Agents that support lazyload_images (ll),
-    # inline_images (ii) and defer_javascript (dj).
-    # Note: Wget is added for testing purposes only.
-    if (req.http.User-Agent ~ "(?i)Chrome/|Firefox/|MSIE |Safari|Wget") {
-      set req.http.PS-CapabilityList = "ll,ii,dj:";
-    }
-    # Cache-fragment 2: Desktop User-Agents that support lazyload_images (ll),
-    # inline_images (ii), defer_javascript (dj), webp (jw) and lossless_webp
-    # (ws).
-    if (req.http.User-Agent ~
-        "(?i)Chrome/[2][3-9]+\.|Chrome/[[3-9][0-9]+\.|Chrome/[0-9]{3,}\.") {
-      set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
-    }
-    # Cache-fragment 3: This fragment contains (a) Desktop User-Agents that
-    # should not map to fragments 1 or 2 and (b) all tablet User-Agents. These
-    # will only get optimizations that work on all browsers and use image
-    # compression qualities applicable to large screens. Note that even tablets
-    # that are capable of supporting inline or webp images, for e.g. Android
-    # 4.1.2, will not get these advanced optimizations.
-    if (req.http.User-Agent ~ "(?i)Firefox/[1-2]\.|MSIE [5-8]\.|bot|Yahoo!|Ruby|RPT-HTTPClient|(Google \(\+https\:\/\/developers\.google\.com\/\+\/web\/snippet\/\))|Android|iPad|TouchPad|Silk-Accelerated|Kindle Fire") {
-      set req.http.PS-CapabilityList = req.http.default_ps_capability_list_for_large_screens;
-    }
-    # Cache-fragment 4: Mobiles and small screen tablets will use image compression
-    # qualities applicable to small screens, but all other optimizations will be
-    # those that work on all browsers.
-    if (req.http.User-Agent ~ "(?i)Mozilla.*Android.*Mobile*|iPhone|BlackBerry|Opera Mobi|Opera Mini|SymbianOS|UP.Browser|J-PHONE|Profile/MIDP|portalmmm|DoCoMo|Obigo|Galaxy Nexus|GT-I9300|GT-N7100|HTC One|Nexus [4|7|S]|Xoom|XT907") {
-      set req.http.PS-CapabilityList = req.http.default_ps_capability_list_for_small_screens;
-    }
-    # unset placeholder header values.
-    unset req.http.default_ps_capability_list_for_large_screens;
-    unset req.http.default_ps_capability_list_for_small_screens;
+sub ps_capabilities {
+  set req.http.PS-CapabilityList="ll,ii,dj:";
+  if (req.http.Accept ~ "image\/webp") {
+    set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
+  }
 }
 
 sub vcl_hash {
   # Block 3: Use the PS-CapabilityList value for computing the hash.
   hash_data(req.http.PS-CapabilityList);
-  hash_data(req.http.Cookie);
+  # hash_data(req.http.X-UA-Device);
 }
 
 # Block 3a: Define ACL for purge requests
@@ -87,7 +49,8 @@ sub pass_if_beacon {
 
 sub vcl_hit {
   // Send 5% of the HITs to the backend for instrumentation.
-  if (req.http.Content-Type ~ "text/html" && std.random(0, 100) <= 5) {
+  if (obj.http.Content-Type ~ "text/html" && (req.url ~ "(?i)beacon=(true|yes)" 
+  	|| std.random(0, 100 ) <= 5)) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
   }
   
@@ -99,7 +62,7 @@ sub vcl_hit {
   
   if (obj.ttl + obj.grace > 0s) {
     // Object is in grace, deliver it and automatically triggers a background fetch or pass it
-    set req.http.Page-Speed-Grace = "Yes";
+    set req.http.X-PS-Grace = "true";
     call pass_if_beacon;
     return (deliver);
   }
@@ -111,7 +74,7 @@ sub vcl_hit {
 
 sub vcl_miss {
   // Send 25% of the MISSes to the backend for instrumentation.
-  if (std.random(0, 100) <= 25) {
+  if (req.url ~ "(?i)beacon=(true|yes)" || std.random(0, 100) <= 25) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
     return (pass);
   }
@@ -128,7 +91,6 @@ sub vcl_purge {
 # Block 4: In vcl_recv, on receiving a request, call the method responsible for
 # generating the User-Agent based key for hashing into the cache.
 sub vcl_recv {
-  
   // determine a client identity based on the X-Forwarded-For header, and fallback to the ip
   set client.identity = std.ip(regsub(req.http.X-Forwarded-For, "[, ].*$", ""), client.ip);
   
@@ -137,13 +99,7 @@ sub vcl_recv {
     return (synth(429, "Too Many Requests, please slow down"));
   }
   
-  
-  // add a flag to determine if the request is local, coming from pagespeed
-  if (client.ip ~ local) {
-    set req.http.X-Local="Yes";
-  } else {
-    set req.http.Host = "${SERVER_NAME}";
-  }
+  set req.http.Host = "${SERVER_NAME}";
   
   if (req.http.Cookie) {
     set req.http.Cookie = ";" + req.http.Cookie;
@@ -157,8 +113,27 @@ sub vcl_recv {
     }
   }
 
-  call generate_user_agent_based_key;
+  if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
+    // Skip the cache for .pagespeed. resource.  PageSpeed has its own
+    // cache for these, and these could bloat up the caching layer.
+    return (pass);
+  }
+  
+  # call generate_user_agent_based_key;
+  call devicedetect; 
+  call ps_capabilities;
 
+  // optionally add debug headers in the response (set in /start)
+  ${DEBUG_HEADERS}
+
+  // optionally add headers for the backend to allow it determine mobile vs desktop
+  if (req.http.X-UA-Device ~ "mobile") {
+    ${SET_HEADER_MOBILE}
+  } else {
+    ${SET_HEADER_DESKTOP}
+  }
+  
+  
   # We want to support beaconing filters, i.e., one or more of inline_images,
   # lazyload_images, inline_preview_images or prioritize_critical_css are
   # enabled. We define a placeholder constant called ps_should_beacon_key_value
@@ -180,29 +155,20 @@ sub vcl_recv {
     }
     return (purge);
   }
-  set req.http.Page-Speed-Grace = "No";
+  
+  if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
+    return (pass);
+  }
+  
   return (hash);
 }
 
 # Block 6: unset upstream cache control and varnish headers
 sub vcl_backend_response {
-  if (bereq.http.X-Local=="Yes" && bereq.url ~ "\.(png|gif|jpg|swf|css|js|ico|woff|ttf|svg)(\?.+)?$" ) {
-    // the request is coming from MapOriginDomain and is for a static resource, do some header cleanup
-    unset beresp.http.Expires;
-    unset beresp.http.Set-Cookie;
-    unset beresp.http.Pragma;
-    if (beresp.http.Cache-Control ~ "max-age=0|private|no-cache|no-store") {
-      set beresp.http.Cache-Control = "max-age=3600";
-    }
-    if (beresp.http.Vary == "*") {
-      unset beresp.http.Vary;
-    }
-    set beresp.http.X-Cleaned="Yes";
-    return (deliver);
-  }
   if (beresp.http.Content-Type ~ "text/html") {
-    // Hide the upstream cache control headers.
+    // For html responses, hide the upstream cache control headers.
     unset beresp.http.ETag;
+    unset beresp.http.Pragma;
     unset beresp.http.Last-Modified;
     unset beresp.http.Cache-Control;
     unset beresp.http.Expires;
@@ -213,33 +179,54 @@ sub vcl_backend_response {
     unset beresp.http.X-Varnish-Cache;
     unset beresp.http.X-Varnish-Cache-Hits;
     unset beresp.http.X-Varnish;
-    set beresp.http.Cache-Control = "no-cache, max-age=0";
-  } else if (!beresp.http.Cache-Control ~ "max-age") {
-     // add a customizable caching header for resources that specify none
-     set beresp.http.Cache-Control = "max-age=${MAX_AGE:-300}";
-  }
+    unset beresp.http.Set-Cookie;
+    unset beresp.http.X-Cache-Control;
+    set beresp.http.X-Cache-Control = "no-cache, max-age=0";
+  } 
   // grace every object for one hour (override with GRACE)
-  set beresp.grace = ${GRACE:-1h};
-  return (deliver);
+  set beresp.ttl   = ${TTL:-300}s;
+  set beresp.grace = ${GRACE:-3600}s;
 }
 
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
-  if (req.http.X-Local=="Yes") {
-    // it's a response for MapOriginDomain, no need to add extra headers
-    return (deliver);
+  unset resp.http.X-Varnish;
+  unset resp.http.X-Page-Speed;
+  set resp.http.Vary = "Accept-Encoding";
+  if (req.http.Page-Speed-Debug) {
+    set resp.http.Page-Speed-CapabilityList = req.http.PS-CapabilityList;
+    set resp.http.X-UA-Device = req.http.X-UA-Device;
+    set resp.http.Page-Speed-Hits = obj.hits;
   }
-  // tell downstream caches to cache based on the encoding and the device detection
-  set resp.http.Vary = "Page-Speed-Device, Accept-Encoding";
-  set resp.http.Page-Speed-Device = req.http.PS-CapabilityList;
+  if (req.http.PS-ShouldBeacon) {
+  	set resp.http.Page-Speed-Beacon = "Yes";
+  }
   if (obj.hits > 0) {
-    set resp.http.Page-Speed-Cache = "HIT";
-    # add a configurable extension to the ttl for downstream caches
+    // it's a HIT
+    if (req.http.Page-Speed-Debug) {
+	    if (req.http.X-PS-Grace == "true") {
+	      set resp.http.Page-Speed-Cache = "GRACED";
+	    } else {
+	      set resp.http.Page-Speed-Cache = "HIT";
+	    }
+    }
+    // add a configurable extension to the ttl for downstream caches
     if (resp.http.Cache-Control ~ "max-age=0") {
-      set resp.http.Cache-Control="public, max-age=${MAX_AGE:-300}";
+      set resp.http.Cache-Control="public, s-maxage=${S_MAXAGE:-120}, max-age=0";
     }
   } else {
-    set resp.http.Page-Speed-Cache = "MISS";
+    // it's a MISS or a GRACE
+    if(resp.http.X-Cache-Control) {
+      set resp.http.Cache-Control = resp.http.X-Cache-Control;
+    }
+    if (req.http.Page-Speed-Debug) {
+	    if (req.http.X-PS-Grace == "true") {
+	      set resp.http.Page-Speed-Cache = "GRACED";
+	    } else {
+	      set resp.http.Page-Speed-Cache = "MISS";
+	    }
+    }    
   }
+  unset resp.http.X-Cache-Control;
   return (deliver);
 }

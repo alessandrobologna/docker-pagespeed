@@ -10,11 +10,11 @@ This platform can be run locally, within a docker environment, or on AWS, within
 
 ### Within a local Docker environment
 Prerequisites:
-- docker
-- docker-machine
-- docker-compose
+- [docker](https://docs.docker.com/installation/)
+- [docker-machine](https://docs.docker.com/machine/install-machine/)
+- [docker-compose](https://docs.docker.com/compose/install/)
 
-Please see the documentation on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
+Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
 Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
 

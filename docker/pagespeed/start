@@ -80,13 +80,13 @@ SECRET_KEY=$(dd if=/dev/urandom bs=256 count=1 2>/dev/null | env LC_CTYPE=C tr -
 SET_HEADER_MOBILE=$(if [ -n "${IF_MOBILE}" ]
 then
 	IFS=':; ' read -a split <<< "${IF_MOBILE}"
-	echo "unset bereq.http.${split[0]}; set bereq.http.${split[0]}=\"${split[1]}\";"
+	echo "unset req.http.${split[0]}; set req.http.${split[0]}=\"${split[1]}\";"
 fi)
 
 SET_HEADER_DESKTOP=$(if [ -n "${IF_DESKTOP}" ]
 then
 	IFS=':; ' read -a split <<< "${IF_DESKTOP}"
-	echo "unset bereq.http.${split[0]}; set bereq.http.${split[0]}=\"${split[1]}\";"
+	echo "unset req.http.${split[0]}; set req.http.${split[0]}=\"${split[1]}\";"
 fi)
 
 # replace env variables in template

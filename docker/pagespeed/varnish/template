@@ -22,16 +22,17 @@ backend default {
 
 
 sub ps_capabilities {
+  call devicedetect; 
   set req.http.PS-CapabilityList="ll,ii,dj:";
   if (req.http.Accept ~ "image\/webp") {
     set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
   }
+  set req.http.Page-Speed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device;
 }
 
 sub vcl_hash {
-  # Block 3: Use the PS-CapabilityList value for computing the hash.
-  hash_data(req.http.PS-CapabilityList);
-  # hash_data(req.http.X-UA-Device);
+  # Block 3: Use the PS-CapabilityList value and the device for computing the hash.
+  hash_data(req.http.Page-Speed-Device);
 }
 
 # Block 3a: Define ACL for purge requests
@@ -120,7 +121,6 @@ sub vcl_recv {
   }
   
   # call generate_user_agent_based_key;
-  call devicedetect; 
   call ps_capabilities;
 
   // optionally add debug headers in the response (set in /start)
@@ -193,6 +193,10 @@ sub vcl_deliver {
   unset resp.http.X-Varnish;
   unset resp.http.X-Page-Speed;
   set resp.http.Vary = "Accept-Encoding";
+  if (req.http.Page-Speed-Device) {
+    set resp.http.Page-Speed-Device = req.http.Page-Speed-Device;
+    set resp.http.Vary = resp.http.Vary + ", Page-Speed-Device";
+  }
   if (req.http.Page-Speed-Debug) {
     set resp.http.Page-Speed-CapabilityList = req.http.PS-CapabilityList;
     set resp.http.X-UA-Device = req.http.X-UA-Device;

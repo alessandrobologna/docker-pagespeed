@@ -1,4 +1,6 @@
 resolver 8.8.8.8;
+aio threads;
+
 pagespeed ForceCaching on;
 pagespeed FetchWithGzip on;
 pagespeed UseNativeFetcher on;

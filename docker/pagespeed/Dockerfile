@@ -44,6 +44,7 @@ RUN cd /tmp/libvmod-vsthrottle-1.0 \
     --with-http_auth_request_module --with-http_addition_module --with-http_dav_module --with-http_geoip_module \
     --with-http_gzip_static_module --with-http_image_filter_module --with-http_spdy_module --with-http_sub_module \
     --with-http_xslt_module --with-mail --with-mail_ssl_module \
+    --with-threads \
     --add-module=/tmp/ngx_http_auth_pam_module-1.4 \
     --add-module=/tmp/nginx-dav-ext-module-0.0.3 \
     --add-module=/tmp/nginx-upstream-fair-master \
@@ -62,9 +63,9 @@ RUN mkdir -p /var/lib/nginx/{body,fastcgi,proxy,scgi,uwsgi}
 VOLUME ["/etc/nginx/sites-enabled","/var/cache/nginx","/var/ngx_pagespeed_cache","/var/log/nginx","/var/log/pagespeed"]
 WORKDIR /etc/nginx/
 
-ADD nginx.conf /etc/nginx/
-ADD sites-enabled /etc/nginx/
-ADD robots.txt /usr/share/nginx/html/
+ADD nginx.conf /etc/nginx/nginx.conf
+ADD sites-enabled /etc/nginx/sites-enabled
+ADD robots.txt /usr/share/nginx/html/robots.txt
 EXPOSE 80
 
 # add template for varnish

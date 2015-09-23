@@ -1,25 +1,30 @@
 # docker-pagespeed
 
 ![Architecture diagram](art/diagram.jpg)
-a docker build of pagespeed, nginx and varnish
+
+## What is it?
+A docker build of pagespeed, nginx and varnish 4, with some convenient tooling to help developing configurations that can be deployed to Amazon Elastic Beanstalk
 
 ## Running it
+This platform can be run locally, within a docker environment, or on AWS, within Elastic Beanstalk. Typically you will testing a configuration in local, and then deploy to AWS.
 
-### With docker-compose
+### Within a local Docker environment
+Prerequisites:
+- docker
+- docker-machine
+- docker-compose
 
-Assuming your docker environment is at 192.168.99.100, and you want to optimize the nytimes, just run
-```bash
-SECRET_KEY=some_weird_key \
-NGINX_PORT=8080 \
-BACKEND=www.nytimes.com \
-BACKENDS=*.nytimes.com  \
-FRONTEND=http://192.168.99.100 \
-SERVER_NAME=192.168.99.100 \
-docker-compose up -d && docker-compose logs
-```
+Please see the documentation on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
+
+Then, you need to have a configuration created in the `configs/` directory. There are a lof of examples in [here](configs), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
+
+`make run myslowsite`
+
+Then open your browser and point to your local machine ip (`open $(docker-machine ip devlocal)` would do).
+If everything goes as expected, you should see your site loading, with all the optimizations you have configured.
+
 
 ## Environment variables
-- SECRET_KEY: a random, hard to guess string, used for the re-beaconing key
 - NGINX_PORT: the port on which nginx would listen (typically 8080)
 - COOKIES: a pipe delimited list of cookie names that are whitelisted
 - BACKEND: the fully qualified hostname for the backend (i.e. www.example.com)

@@ -3,16 +3,17 @@
 ![Architecture diagram](art/diagram.jpg)
 
 ## What is it?
-A docker build of pagespeed, nginx and varnish 4, with some convenient tooling to help developing configurations that can be deployed to Amazon Elastic Beanstalk
+A docker build of [pagespeed](https://developers.google.com/speed/pagespeed/module/), [nginx](http://nginx.org/) and [varnish 4](https://www.varnish-cache.org/), with some convenient tooling to help developing enviromnent configurations that can be deployed to Amazon Elastic Beanstalk
 
 ## Running it
-This platform can be run locally, within a docker environment, or on AWS, within Elastic Beanstalk. Typically you will testing a configuration in local, and then deploy to AWS.
+This platform can be run locally, within a docker environment, or on AWS, within [Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/). Typically you will testing a configuration in local, and then deploy to AWS.
 
 ### Within a local Docker environment
 Prerequisites:
 - [docker](https://docs.docker.com/installation/)
 - [docker-machine](https://docs.docker.com/machine/install-machine/)
 - [docker-compose](https://docs.docker.com/compose/install/)
+- optionally, the [eb cli](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html) for deploying to Elastic Beanstalk
 
 Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
 

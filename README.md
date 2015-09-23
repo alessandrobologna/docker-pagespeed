@@ -1,4 +1,6 @@
 # docker-pagespeed
+
+![Architecture diagram](art/diagram.jpg)
 a docker build of pagespeed, nginx and varnish
 
 ## Running it

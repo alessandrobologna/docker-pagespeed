@@ -16,7 +16,7 @@ Prerequisites:
 
 Please see the documentation on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
-Then, you need to have a configuration created in the `configs/` directory. There are a lof of examples in [here](configs), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
+Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
 
 `make run myslowsite`
 

@@ -21,7 +21,7 @@ Then, you need to have a configuration created in the `configs/local` directory.
 
 `make run myslowsite`
 
-Then open your browser and point to your local machine ip (`open $(docker-machine ip devlocal)` would do).
+Then open your browser and point to your local machine ip ('docker-machine ip devlocal` if you don't know it).
 If everything goes as expected, you should see your site loading, with all the optimizations you have configured.
 
 

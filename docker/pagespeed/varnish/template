@@ -20,15 +20,41 @@ backend default {
    }
 }
 
+sub browserdetect {
+  set req.http.X-UA = "default";
+  if (req.http.user-agent ~ "MSIE") {
+    set req.http.X-UA = "msie";
+  } 
+  if (req.http.user-agent ~ "Firefox") {
+    set req.http.X-UA = "firefox";
+  }  
+  if (req.http.user-agent ~ "Safari") {
+     set req.http.X-UA = "safari";
+  } 
+  if (req.http.user-agent ~ "Chrome") {
+    set req.http.X-UA = "chrome";
+  } 
+}
 
 sub ps_capabilities {
+  call browserdetect; 
   call devicedetect; 
-  set req.http.PS-CapabilityList="ll,ii,dj:";
+  if (req.http.X-UA == "msie" || req.http.X-UA == "default") {
+    if (req.http.X-UA-Device ~ "mobile") {
+      set req.http.PS-CapabilityList="TinyScreen.SkipUADependentOptimizations:";
+    } else {
+      set req.http.PS-CapabilityList="LargeScreen.SkipUADependentOptimizations:";
+    }
+  } else {
+    set req.http.PS-CapabilityList="ll,ii,dj:";
+  }
   if (req.http.Accept ~ "image\/webp") {
     set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
   }
-  set req.http.Page-Speed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device;
+  set req.http.Page-Speed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device + "/" + req.http.X-UA;
 }
+
+
 
 sub vcl_hash {
   # Block 3: Use the PS-CapabilityList value and the device for computing the hash.
@@ -51,7 +77,7 @@ sub pass_if_beacon {
 sub vcl_hit {
   // Send 5% of the HITs to the backend for instrumentation.
   if (obj.http.Content-Type ~ "text/html" && (req.url ~ "(?i)beacon=(true|yes)" 
-  	|| std.random(0, 100 ) <= 5)) {
+  	|| std.random(0, 100 ) <= 5 || obj.hits == 1)) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
   }
   
@@ -75,7 +101,7 @@ sub vcl_hit {
 
 sub vcl_miss {
   // Send 25% of the MISSes to the backend for instrumentation.
-  if (req.url ~ "(?i)beacon=(true|yes)" || std.random(0, 100) <= 25) {
+  if (req.url ~ "(?i)beacon=(true|yes)" || std.random(0, 100) <= 0) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
     return (pass);
   }
@@ -182,9 +208,10 @@ sub vcl_backend_response {
     unset beresp.http.Set-Cookie;
     unset beresp.http.X-Cache-Control;
     set beresp.http.X-Cache-Control = "no-cache, max-age=0";
+    // make sure the object is still cached in varnish for a miminum amount of time
+    set beresp.ttl   = ${TTL:-120}s;
   } 
   // grace every object for one hour (override with GRACE)
-  set beresp.ttl   = ${TTL:-300}s;
   set beresp.grace = ${GRACE:-3600}s;
 }
 
@@ -199,7 +226,6 @@ sub vcl_deliver {
   }
   if (req.http.Page-Speed-Debug) {
     set resp.http.Page-Speed-CapabilityList = req.http.PS-CapabilityList;
-    set resp.http.X-UA-Device = req.http.X-UA-Device;
     set resp.http.Page-Speed-Hits = obj.hits;
   }
   if (req.http.PS-ShouldBeacon) {
@@ -214,7 +240,7 @@ sub vcl_deliver {
 	      set resp.http.Page-Speed-Cache = "HIT";
 	    }
     }
-    // add a configurable extension to the ttl for downstream caches
+    // add a configurable extension to the ttl for downstream caches when the response is a HIT
     if (resp.http.Cache-Control ~ "max-age=0") {
       set resp.http.Cache-Control="public, s-maxage=${S_MAXAGE:-120}, max-age=0";
     }

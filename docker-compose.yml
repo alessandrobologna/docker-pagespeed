@@ -8,6 +8,7 @@ pagespeed:
     SERVER_NAME:
     PROXY_DOMAINS:
     PROXY_HTTPS_DOMAINS:
+    ALLOW_ROBOTS:
     FILTERS_ON:
     FILTERS_OFF:
     FILTERS_ENABLED:
@@ -18,6 +19,7 @@ pagespeed:
     MAX_REQUESTS:
     HEALTCHECK:
     TTL:
+    S_MAXAGE:
     GRACE:
     S_MAXAGE:
     DEBUG:
@@ -26,6 +28,5 @@ pagespeed:
   ports:
    - "80:80"
    - "8080:8080"
-  volumes:
-   - /app/ngx_pagespeed_cache:/var/ngx_pagespeed_cache
+   
    

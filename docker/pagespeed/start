@@ -3,14 +3,26 @@
 # remove old default conf if present
 rm -f /etc/nginx/sites-enabled/default
 
+# create cache dir
+/bin/mkdir -p /var/cache/pagespeed
+/bin/chmod a+wrx /var/cache/pagespeed
+
+/bin/mkdir -p /var/cache/nginx
+/bin/chmod a+wrx /var/cache/nginx
+
+/bin/mkdir -p /var/log/pagespeed
+/bin/chmod a+wrx /var/log/pagespeed
+
 # determine available memory:
 MEMORY_MB=$(($(grep MemTotal /proc/meminfo | awk '{print $2}') / 1024))
 
+#determine available disk space for pagespeed cache
+DISK_PAGESPEED_MB=$(df -m /var/cache/pagespeed | awk '/[0-9]%/{print $(NF-4)}')
+#determine available disk space for varnish cache
+DISK_VARNISH_MB=$(df -m /var/cache/varnish | awk '/[0-9]%/{print $(NF-4)}')
+
 # set FRONTEND
-if [ -z $FRONTEND ]
-then 
-	FRONTEND=http://${SERVER_NAME}
-fi
+FRONTEND="${${FRONTEND}:-http://${SERVER_NAME}}"
 
 # maybe build backends
 MAP_BACKENDS=$(for backend in ${BACKENDS}
@@ -61,16 +73,12 @@ do
 	echo -e "\tpagespeed ${filter} off;"
 done)
 
-DEBUG_HEADERS=$(if [ -n "${DEBUG}" ]
-then
-	 echo "set req.http.Page-Speed-Debug=\"Yes\";"
-fi)
 	
 # configure memcache: if MEMCACHED is not provided or not reachable start a local node
 MEMCACHED_ADDR="${MEMCACHED:-127.0.0.1}"
 if ! nc -z -w5 "${MEMCACHED_ADDR}" 11211
 then
-	echo "Could not connect to ${MEMCACHED_ADDR}:11211, starting local node"
+	echo "Could not connect to ${MEMCACHED_ADDR}:11211, starting local node with size ${MEMCACHED_SIZE:-$((MEMORY_MB/4))}M"
 	/usr/bin/memcached -d -m ${MEMCACHED_SIZE:-$((MEMORY_MB/4))}M -p 11211 -u nobody -l 127.0.0.1
 fi
 
@@ -89,17 +97,14 @@ then
 	echo "unset req.http.${split[0]}; set req.http.${split[0]}=\"${split[1]}\";"
 fi)
 
+DEBUG_HEADERS=$([ -n "${DEBUG}" ] && echo "set req.http.Page-Speed-Debug=\"Yes\";")
+ROBOTS=$([ -n "${ALLOW_ROBOTS}" ] && echo -e "\tlocation /robots.txt { alias /usr/share/nginx/html/robots.txt;}")
+
 # replace env variables in template
 echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' /etc/nginx/sites-enabled/template)\"")" >  /etc/nginx/sites-enabled/default.conf
 echo -e "\n/etc/nginx/sites-enabled/default.conf:"
 cat --number /etc/nginx/sites-enabled/default.conf
 
-# create cache dir
-/bin/mkdir -p /var/ngx_pagespeed_cache
-/bin/chmod a+wrx /var/ngx_pagespeed_cache
-
-/bin/mkdir -p /var/log/pagespeed
-/bin/chmod a+wrx /var/log/pagespeed
 
 # replace env variables in template
 echo "$(eval "echo \"$(sed 's/\"/\\\"/g' /etc/varnish//template)\"")" >  /etc/varnish/default.vcl
@@ -109,8 +114,11 @@ cat --number /etc/varnish/default.vcl
 echo -e "\n/etc/hosts:"
 cat --number /etc/hosts
 echo -e "\n"
-# start varnish
-/usr/sbin/varnishd -f /etc/varnish/default.vcl -s malloc,${VARNISH_SIZE:-$((MEMORY_MB/4))}M -a 0.0.0.0:${VARNISH_PORT:-80}
+# start varnish with one third of disk space allocated for cache
+echo "starting varnish with cache size ${VARNISH_SIZE:-$((DISK_VARNISH_MB/3))}M"
+/usr/sbin/varnishd -f /etc/varnish/default.vcl -s file,/var/cache/varnish/varnish_storage.bin,${VARNISH_SIZE:-$((DISK_VARNISH_MB/3))}M -a 0.0.0.0:${VARNISH_PORT:-80}
 
 # start nginx
+echo "starting nginx with cache size $((${DISK_PAGESPEED_MB} / 3))M"
+
 /usr/sbin/nginx $@

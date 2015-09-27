@@ -24,6 +24,7 @@ push: checkarg
 
 # The following rules are for Elastic Beanstalk deployment
 %.zip: % 
+	@if [ ! -f "$<" ]; then echo "Could not find $<"; exit 1; fi
 	@echo "Building configuration $< for Amazon Beanstalk"
 	@rm -rf target/$(<F)/.ebextensions 
 	@rm -f target/$(<F)/*.zip 
@@ -48,7 +49,7 @@ deploy: checkarg ${ARGUMENT}.zip
 # deploy all apps
 deployall:
 	@echo "Deploying all apps to Amazon Beanstalk"
-	@for target in target/*; do (if [ -d "$${target}/.elasticbeanstalk" ]; then echo "Deploying $$(basename $$target)";  make deploy $$(basename $$target)  &> "deploy-$$(basename $$target).log"; fi &) done; sleep 5; tail -f *.log
+	@for target in target/*; do (if [ -d "$${target}/.elasticbeanstalk" ]; then echo "Deploying $$(basename $$target)";  make deploy $$(basename $$target)  &> "logs/deploy-$$(basename $$target).log"; fi &) done; sleep 5; tail -f logs/deploy-*.log
 
 logs: checkarg 
 	@cd target/${ARGUMENT} && eb logs

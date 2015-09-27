@@ -60,7 +60,7 @@ RUN cd /tmp/libvmod-vsthrottle-1.0 \
 RUN mkdir -p /var/lib/nginx
 RUN mkdir -p /var/lib/nginx/{body,fastcgi,proxy,scgi,uwsgi}
 
-VOLUME ["/etc/nginx/sites-enabled","/var/cache/nginx","/var/ngx_pagespeed_cache","/var/log/nginx","/var/log/pagespeed"]
+VOLUME ["/etc/nginx/sites-enabled", "/var/cache/nginx","/var/cache/pagespeed","/var/log/nginx","/var/log/pagespeed","/var/cache/varnish"]
 WORKDIR /etc/nginx/
 
 ADD nginx.conf /etc/nginx/nginx.conf

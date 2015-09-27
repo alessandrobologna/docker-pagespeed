@@ -9,11 +9,5 @@
          "ContainerPort":"80"
       }
    ],
-   "Volumes":[
-      {
-         "HostDirectory":"/var/app/ngx_pagespeed_cache",
-         "ContainerDirectory":"/var/ngx_pagespeed_cache"
-      }
-   ],
    "Logging":"/var/log/nginx"
 }

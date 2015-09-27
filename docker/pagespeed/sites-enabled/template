@@ -9,8 +9,8 @@ pagespeed RateLimitBackgroundFetches off;
 
 pagespeed GlobalAdminPath /pagespeed_global_admin;
 pagespeed GlobalStatisticsPath /ngx_pagespeed_global_statistics;
-pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
-pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
+#pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
+#pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
 pagespeed EnableCachePurge on;
 pagespeed MessageBufferSize 100000;
 
@@ -24,10 +24,16 @@ server {
 
 	pagespeed on;
 
-	pagespeed FileCachePath				"/var/ngx_pagespeed_cache";
-	pagespeed FileCacheSizeKb			102400000;
+
+	pagespeed FileCachePath				"/var/cache/pagespeed";
+	
+	# set cache size to one third the size of the available space
+	pagespeed FileCacheSizeKb			$((${DISK_PAGESPEED_MB} * 1024 / 3));
 	pagespeed FileCacheCleanIntervalMs	3600000;
 	pagespeed FileCacheInodeLimit		500000;
+	
+	pagespeed LRUCacheKbPerProcess     8192;
+	pagespeed LRUCacheByteLimit        16384;
 
 
 	# admin handlers
@@ -64,6 +70,8 @@ server {
 	pagespeed EnableFilters prioritize_critical_css;
 	pagespeed EnableFilters rewrite_style_attributes_with_url;		
 	pagespeed EnableFilters collapse_whitespace;
+	pagespeed ServeRewrittenWebpUrlsToAnyAgent off;
+	
 	
 	
 	
@@ -119,7 +127,5 @@ ${MAP_PROXY_HTTPS_DOMAINS}
 		proxy_hide_header Set-Cookie;
 	}
 	
-	location /robots.txt {
-		alias /usr/share/nginx/html/robots.txt;
-	}
+	${ROBOTS}	
 }

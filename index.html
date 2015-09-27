@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Docker-pagespeed by alessandrobologna</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Docker-pagespeed</h1>
+      <h2 class="project-tagline">a docker build of pagesped, nginx and varnish</h2>
+      <a href="https://github.com/alessandrobologna/docker-pagespeed" class="btn">View on GitHub</a>
+      <a href="https://github.com/alessandrobologna/docker-pagespeed/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/alessandrobologna/docker-pagespeed/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="docker-pagespeed" class="anchor" href="#docker-pagespeed" aria-hidden="true"><span class="octicon octicon-link"></span></a>docker-pagespeed</h1>
+
+<p><img src="https://github.com/alessandrobologna/docker-pagespeed/raw/master/art/diagram.jpg" alt="Architecture diagram"></p>
+
+<h2>
+<a id="what-is-it" class="anchor" href="#what-is-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is it?</h2>
+
+<p>A docker build of <a href="https://developers.google.com/speed/pagespeed/module/">pagespeed</a>, <a href="http://nginx.org/">nginx</a> and <a href="https://www.varnish-cache.org/">varnish 4</a>, with some convenient tooling to help developing enviromnent configurations that can be deployed to Amazon Elastic Beanstalk</p>
+
+<h2>
+<a id="running-it" class="anchor" href="#running-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running it</h2>
+
+<p>This platform can be run locally, within a docker environment, or on AWS, within <a href="https://aws.amazon.com/elasticbeanstalk/">Elastic Beanstalk</a>. Typically you will testing a configuration in local, and then deploy to AWS.</p>
+
+<h3>
+<a id="within-a-local-docker-environment" class="anchor" href="#within-a-local-docker-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Within a local Docker environment</h3>
+
+<p>Prerequisites:</p>
+
+<ul>
+<li><a href="https://docs.docker.com/installation/">docker</a></li>
+<li><a href="https://docs.docker.com/machine/install-machine/">docker-machine</a></li>
+<li><a href="https://docs.docker.com/compose/install/">docker-compose</a></li>
+<li>optionally, the <a href="http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html">eb cli</a> for deploying to Elastic Beanstalk</li>
+</ul>
+
+<p>Please see the <a href="https://docs.docker.com/machine/get-started/">documentation</a> on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run <code>eval(docker-machine env devlocal)</code>. This will configure you terminal session to point to the docker daemon running on your local machine.</p>
+
+<p>Then, you need to have a configuration created in the <code>configs/local</code> directory. There are a lof of examples in <a href="configs/local">here</a>, so just take one and rename/change it for your needs. If your configuration is called <code>myslowsite</code> then just run:</p>
+
+<p><code>make run myslowsite</code></p>
+
+<p>Then open your browser and point to your local machine ip (<code>docker-machine ip devlocal</code> if you don't know it).
+If everything goes as expected, you should see your site loading, with all the optimizations you have configured.</p>
+
+<h2>
+<a id="environment-variables" class="anchor" href="#environment-variables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Environment variables</h2>
+
+<ul>
+<li>NGINX_PORT: the port on which nginx would listen (typically 8080)</li>
+<li>COOKIES: a pipe delimited list of cookie names that are whitelisted</li>
+<li>BACKEND: the fully qualified hostname for the backend (i.e. <a href="http://www.example.com">www.example.com</a>)</li>
+<li>BACKENDS: a wildcard for other hostnames that are serving contents for the main site (i.e *.example.com)</li>
+<li>FRONTEND: the URL of the site, as it will appear to users (i.e. <a href="http://faster.example.com">http://faster.example.com</a>)</li>
+<li>SERVER_NAME: the fully qualified hostname for the fronted (i.e. faster.example.com) </li>
+<li>PROXY_DOMAINS: a space separated list of fully qualified hostnames that can be safely considered part of the site (i.e. cdn.somesite.com js.somether.net)</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/alessandrobologna/docker-pagespeed">Docker-pagespeed</a> is maintained by <a href="https://github.com/alessandrobologna">alessandrobologna</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>

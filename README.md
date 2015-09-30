@@ -15,7 +15,7 @@ Prerequisites:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - optionally, the [eb cli](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html) for deploying to Elastic Beanstalk
 
-Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval(docker-machine env devlocal)`. This will configure you terminal session to point to the docker daemon running on your local machine.
+Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine. Once you have created one, let's say it's called devlocal, run `eval "$(docker-machine env devlocal)"`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
 Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
 
@@ -23,6 +23,14 @@ Then, you need to have a configuration created in the `configs/local` directory.
 
 Then open your browser and point to your local machine ip (`docker-machine ip devlocal` if you don't know it).
 If everything goes as expected, you should see your site loading, with all the optimizations you have configured.
+
+### On Elastic Beanstalk
+
+This assumes that you know how to [create an application](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.newapp.html) (use the latest docker based option). Once your application is created, you will need to [launch an enviroment] (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.environments.html) which will be used by your site.  The makefile will help you to create an environment for each site. Make sure your configuration for `myslowsite` is the configs/eb directory. Then run
+`make init myslowsite`
+answer to the prompts to let Elastic Beanstalk know what environment you intend to use.
+Then run `make deploy myslowsite` and wait until it's done. You should have a site running at whatever URL you assigned to it.
+
 
 
 ## Environment variables

@@ -34,12 +34,29 @@ Then run `make deploy myslowsite` and wait until it's done. You should have a si
 
 
 ## Environment variables
-- NGINX_PORT: the port on which nginx would listen (typically 8080)
-- COOKIES: a pipe delimited list of cookie names that are whitelisted
-- BACKEND: the fully qualified hostname for the backend (i.e. www.example.com)
-- BACKENDS: a wildcard for other hostnames that are serving contents for the main site (i.e *.example.com)
-- FRONTEND: the URL of the site, as it will appear to users (i.e. http://faster.example.com)
-- SERVER_NAME: the fully qualified hostname for the fronted (i.e. faster.example.com) 
-- PROXY_DOMAINS: a space separated list of fully qualified hostnames that can be safely considered part of the site (i.e. cdn.somesite.com js.somether.net)
+  - BACKEND: This is the address of the origin servers (for instance, origin.myslowsite.com)
+  - BACKENDS: If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that pagespeed can handle more efficienlty by fetching resources from the origin. 
+  - SERVER_NAME: This is the plain hostname, so www.mysite.com.
+  - FRONTEND: This is the url for the hostname that you will use, facing the internet. Typically, http://www.mysite.com
+  - PROXY_DOMAINS: (Optional) This is a white space delimited list of domains that your site is fetching resources from. Third party JS, CSS, images. They all go there. The resources they are serving will be optimized and served from www.mysite.com/proxy/the.other.domain
+  - PROXY_HTTPS_DOMAINS: (Optional) Same as above, but for third party that want you to use their ssl servers.
+  - COOKIES: if cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 
+  - ALLOW_ROBOTS: (Optional) Don't set this variable if you are testing, it will by default send all crawlers somewhere else (because you are just testing and don't want that to be on google). If instead you want the serve the proper robots.txt from your origin, set this to "true" or "yes".
+  - FILTERS_ON: (Optional) A white space delimited list of settings (yes, they are actually pagespeed settings, not filters, don't ask) that you want to activate for your site. Note that a sane set of settings is already configured. You may want to check [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template) to see what's already enabled. For instance, "UseExperimentalJsMinifier"
+  - FILTERS_OFF: (Optional) Just the opposite of the above. Does one setting break your site? Does it slow it down? List it here (white spaces delimited list). For instance, "AvoidRenamingIntrospectiveJavascript".
+  - FILTERS_ENABLED: (Optional) The filters that you want, on top of what's already here [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template), in the usual white space delimited list. For instance "inline_preview_images resize_mobile_images"
+  - FILTERS_DISABLED: (Optional) The filters that you don't want to have running on your site out of those enabled by default [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template)
+  - CUSTOM_SETTINGS: (Optional) As the name says, custom setting for Pagespeed that are not just "on" or off". For instance, "pagespeed MaxSegmentLength 250;". Note that in this case, you will need to respect the full syntax for pagespeed.
+    MEMCACHED: (Optional) In a local configuration, this is not required, as a memcached daemon will be started automatically for you. If you are running this on AWS (or elsewhere), just list the address of the memcached servers.  The port number is assumed to be the standard one, so you don't need to specifiy it here.
+    MEMCACHED_SIZE: (Optional)
+    MAX_REQUESTS: (Optional)
+    HEALTCHECK: (Optional)
+    TTL: (Optional)
+    S_MAXAGE: (Optional)
+    GRACE: (Optional)
+    S_MAXAGE: (Optional)
+    DEBUG: (Optional)
+    IF_DESKTOP: (Optional)
+    IF_MOBILE: (Optional)
 
 

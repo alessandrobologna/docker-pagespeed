@@ -7,11 +7,17 @@ rm -f /etc/nginx/sites-enabled/default
 /bin/mkdir -p /var/cache/pagespeed
 /bin/chmod a+wrx /var/cache/pagespeed
 
+/bin/mkdir -p /var/cache/varnish
+/bin/chmod a+wrx /var/cache/varnish
+
 /bin/mkdir -p /var/cache/nginx
 /bin/chmod a+wrx /var/cache/nginx
 
 /bin/mkdir -p /var/log/pagespeed
 /bin/chmod a+wrx /var/log/pagespeed
+
+# make the container believe that SERVER_NAME is 127.0.0.1
+echo -e "\n127.0.0.1 \t${SERVER_NAME}" >> /etc/hosts
 
 # determine available memory:
 MEMORY_MB=$(($(grep MemTotal /proc/meminfo | awk '{print $2}') / 1024))
@@ -22,7 +28,8 @@ DISK_PAGESPEED_MB=$(df -m /var/cache/pagespeed | awk '/[0-9]%/{print $(NF-4)}')
 DISK_VARNISH_MB=$(df -m /var/cache/varnish | awk '/[0-9]%/{print $(NF-4)}')
 
 # set FRONTEND
-FRONTEND="${${FRONTEND}:-http://${SERVER_NAME}}"
+FRONTEND="${FRONTEND:-http://${SERVER_NAME}}"
+ORIGIN=${ORIGIN:-${BACKEND}}
 
 # maybe build backends
 MAP_BACKENDS=$(for backend in ${BACKENDS}
@@ -34,18 +41,24 @@ done)
 # maybe build proxy domains
 MAP_PROXY_DOMAINS=$(for domain in ${PROXY_DOMAINS}
 do
-#	echo -e "\tpagespeed Domain ${domain};"
-	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/proxy/${domain} ${domain};"
-	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND}/proxy/${domain} ${domain};"
+	echo -e "\tpagespeed Domain ${domain};"
+	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/_proxy/plain/${domain} ${domain};"
+	echo -e "\tpagespeed MapRewriteDomain ${CDN:-${FRONTEND}}/_proxy/plain/${domain} ${domain};"
 done)
 
 # maybe build https proxy domains
 MAP_PROXY_HTTPS_DOMAINS=$(for domain in ${PROXY_HTTPS_DOMAINS}
 do
-#	echo -e "\tpagespeed Domain ${domain};"
-	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/proxy/${domain} https://${domain}; "
-	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND}/proxy/${domain} https://${domain};"
+	echo -e "\tpagespeed Domain ${domain};"
+	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/_proxy/https/${domain} https://${domain}; "
+	echo -e "\tpagespeed MapRewriteDomain ${CDN:-${FRONTEND}}/_proxy/https/${domain} https://${domain};"
 done)
+
+ALLOWED_DOMAINS=$(for domain in ${PROXY_DOMAINS} ${PROXY_HTTPS_DOMAINS}
+do
+	echo -e "\t\"$domain\" \"$domain\";"
+done)
+
 
 # maybe setup extra configurations for filters
 ENABLED_FILTERS=$(for filter in ${FILTERS_ENABLED}
@@ -98,7 +111,8 @@ then
 fi)
 
 DEBUG_HEADERS=$([ -n "${DEBUG}" ] && echo "set req.http.Page-Speed-Debug=\"Yes\";")
-ROBOTS=$([ -n "${ALLOW_ROBOTS}" ] && echo -e "\tlocation /robots.txt { alias /usr/share/nginx/html/robots.txt;}")
+PROXY_HIDE_BACKEND_HEADERS=$([ -z "${HIDE_BACKEND_HEADERS}" ] && echo "include sites-enabled/includes/proxy-remove-headers;")
+ROBOTS=$([ -z "${ALLOW_ROBOTS}" ] && echo -e "\tlocation /robots.txt { alias /usr/share/nginx/html/robots.txt;}")
 
 # replace env variables in template
 echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' /etc/nginx/sites-enabled/template)\"")" >  /etc/nginx/sites-enabled/default.conf
@@ -116,7 +130,14 @@ cat --number /etc/hosts
 echo -e "\n"
 # start varnish with one third of disk space allocated for cache
 echo "starting varnish with cache size ${VARNISH_SIZE:-$((DISK_VARNISH_MB/3))}M"
-/usr/sbin/varnishd -f /etc/varnish/default.vcl -s file,/var/cache/varnish/varnish_storage.bin,${VARNISH_SIZE:-$((DISK_VARNISH_MB/3))}M -a 0.0.0.0:${VARNISH_PORT:-80}
+/usr/sbin/varnishd -f /etc/varnish/default.vcl -s file,/var/cache/varnish/varnish_storage1.bin,${VARNISH_SIZE:-$((DISK_VARNISH_MB/3))}M -a 0.0.0.0:${VARNISH_PORT:-80}
+
+# start cache warmer
+if [ -n ${WARMER_URL} ] 
+then
+	echo "starting cache warmer: ${WARMER_URL}"
+	/cache-warmer ${WARMER_URL} > /var/log/nginx/warmly.log &
+fi
 
 # start nginx
 echo "starting nginx with cache size $((${DISK_PAGESPEED_MB} / 3))M"

@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# warmly.sh
+# A wget based, easy, poor man`s cache warmer script
+# https://gist.github.com/thomasfr/7926314
+
+# The MIT License (MIT)
+#
+# Copyright (c) 2013,2014 Thomas Fritz <fritztho@gmail.com> (http://fritzthomas.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+CURRENT_WORKING_DIR="$(pwd)"
+WARMLY_HOME="$(cd $(dirname $0);pwd)"
+cd $CURRENT_WORKING_DIR
+
+WARMLY_WGET_LOGFILE="/var/log/nginx/wget.log"
+WARMLY_DEKTOP_USER_AGENT="Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+WARMLY_MOBILE_USER_AGENT="Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4"
+WARMLY_START_URL="${1}"
+WARMLY_WAIT_NEXT_RUN="${WARMLY_WAIT_NEXT_RUN:-900}s"
+WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS="${WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS:-0.5}"
+WARMLY_REJECT="${WARMLY_REJECT:-txt,xml,json,rss,atom,jpg,jpeg,gif,png,mp4,js,css}"
+WARMLY_LIMIT=${WARMLY_LIMIT:-1} # max depth
+WARMLY_RUN=1
+
+if [ -z $WARMLY_START_URL ]; then
+	echo "No starting url set"
+	exit 1
+fi
+# don't start right away
+sleep 60
+
+echo "Using User-Agent: '$WARMLY_USER_AGENT'"
+echo "Warmly starts here: '$WARMLY_START_URL' for $SERVER_NAME"
+echo "$(date) START"
+while :
+	do
+		echo "$(date) START RUN '#${WARMLY_RUN}'"
+		wget -e robots=off --header "Host: ${SERVER_NAME:-localhost}" --no-cache -R ${WARMLY_REJECT} --wait=${WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS} --limit-rate=400k --delete-after -r -nd -N -l "${WARMLY_LIMIT}" -t 3 -T 20 -nv -o "${WARMLY_WGET_LOGFILE}" -U "${WARMLY_DEKTOP_USER_AGENT}" "${WARMLY_START_URL}" &
+		wget -e robots=off --header "Host: ${SERVER_NAME:-localhost}" --no-cache -R ${WARMLY_REJECT} --wait=${WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS} --limit-rate=400k --delete-after -r -nd -N -l "${WARMLY_LIMIT}" -t 3 -T 20 -nv -o "${WARMLY_WGET_LOGFILE}" -U "${WARMLY_MOBILE_USER_AGENT}" "${WARMLY_START_URL}" &
+		wait
+		echo "$(date) WAIT '${WARMLY_WAIT_NEXT_RUN}' for next run"
+		sleep "${WARMLY_WAIT_NEXT_RUN}"
+		let "WARMLY_RUN=WARMLY_RUN+1"
+done

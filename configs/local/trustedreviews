@@ -1,0 +1,17 @@
+BACKEND="www.trustedreviews.com"
+PROXY_DOMAINS="static.trustedreviews.com code.jquery.com yui.yahooapis.com admin.brightcove.com \
+	assets.ipcdigital.co.uk zardoz.ipcdigital.co.uk"
+SERVER_NAME="192.168.99.100"
+FRONTEND="http://192.168.99.100"
+FILTERS_ENABLED="inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
+	convert_to_webp_lossless resize_rendered_image_dimensions"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
+	pagespeed InPlaceRewriteDeadlineMs 1000; \
+	pagespeed RewriteDeadlinePerFlushMs 1000; \
+	pagespeed ImplicitCacheTtlMs 3600000; \
+	pagespeed UrlValuedAttribute img data-echo image; \
+	pagespeed ImageRecompressionQuality 75;"
+#WARMER_URL="http://localhost/"
+DEBUG="yes"

@@ -7,7 +7,7 @@ MAINTAINER Alessandro Bologna <alessandro.bologna@gmail.com>
 ENV DEBIAN_FRONTEND noninteractive
 
 # nginx - 1.9.3
-# pagespeed - 1.9.32.6
+# pagespeed - 1.9.32.10
 # nginx-dav-ext-module - 0.0.3
 # ngx_http_auth_pam_module - 1.4
 # nginx-upstream-fair - master
@@ -20,8 +20,8 @@ RUN apt-get update -qq \
     libpam0g-dev libperl-dev wget ca-certificates socat netcat memcached curl \
     varnish libvarnishapi-dev libvarnishapi1 automake autotools-dev libtool python-docutils
 
-RUN (wget -qO - https://github.com/pagespeed/ngx_pagespeed/archive/v1.9.32.6-beta.tar.gz | tar zxf  - -C /tmp --owner root --group root --no-same-owner) \
-    && (wget -qO - https://dl.google.com/dl/page-speed/psol/1.9.32.6.tar.gz | tar zxf - -C /tmp/ngx_pagespeed-1.9.32.6-beta/ --owner root --group root --no-same-owner) \
+RUN (wget -qO - https://github.com/pagespeed/ngx_pagespeed/archive/v1.9.32.10-beta.tar.gz | tar zxf  - -C /tmp --owner root --group root --no-same-owner) \
+    && (wget -qO - https://dl.google.com/dl/page-speed/psol/1.9.32.10.tar.gz | tar zxf - -C /tmp/ngx_pagespeed-1.9.32.10-beta/ --owner root --group root --no-same-owner) \
     && (wget -qO - http://nginx.org/download/nginx-1.9.3.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
     && (wget -qO - https://github.com/arut/nginx-dav-ext-module/archive/v0.0.3.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner ) \
     && (wget -qO - https://github.com/openresty/echo-nginx-module/archive/v0.57.tar.gz | tar zxf - -C /tmp --owner root --group root --no-same-owner) \
@@ -49,11 +49,11 @@ RUN cd /tmp/libvmod-vsthrottle-1.0 \
     --add-module=/tmp/nginx-dav-ext-module-0.0.3 \
     --add-module=/tmp/nginx-upstream-fair-master \
     --add-module=/tmp/ngx_http_substitutions_filter_module-0.6.4 \
-    --add-module=/tmp/ngx_pagespeed-1.9.32.6-beta \
+    --add-module=/tmp/ngx_pagespeed-1.9.32.10-beta \
     --add-module=/tmp/headers-more-nginx-module-0.261 \
     && make install \
     && rm -Rf /tmp/* \
-    && apt-get purge -yqq wget build-essential automake autotools-dev libtool python-docutils \
+    && apt-get purge -yqq build-essential automake autotools-dev libtool python-docutils \
     && apt-get autoremove -yqq \
     && apt-get clean
 
@@ -72,9 +72,8 @@ EXPOSE 80
 ADD varnish/template /etc/varnish/
 ADD varnish/devicedetect.vcl /etc/varnish/
 ADD varnish/useragent-key.vcl /etc/varnish/
-
+ADD cache-warmer /cache-warmer
 ADD start /start
-RUN chmod +x /start
-
+RUN chmod +x /start /cache-warmer
 ENTRYPOINT ["/start"]
 

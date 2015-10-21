@@ -1,21 +1,19 @@
 BACKEND="www.si.com"
-PROXY_DOMAINS="www.si.com/sites cdn-css.si.com cdn-jpg.si.com cdn-png.si.com cdn-js.si.com \
-	img.timeinc.net img5.timeinc.net tiads.timeinc.net www5.timeinc.net subscription-assets.timeinc.com \
-	js.revsci.net pq-direct.revsci.net admin.brightcove.com speed.pointroll.com www.googletagservices.com asset.pagefair.com \
-	platform.twitter.com sportsillustrated.ep.livefyre.com ui.bamstatic.com \
-	tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com static.chartbeat.com native.sharethrough.com zor.livefyre.com"
-PROXY_HTTPS_DOMAINS="apis.google.com www.googleadservices.com"
-SERVER_NAME="app-accelerator-si.elasticbeanstalk.com"
-FRONTEND="http://app-accelerator-si.elasticbeanstalk.com"
-MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+PROXY_DOMAINS="cdn-css.si.com cdn-jpg.si.com cdn-png.si.com cdn-js.si.com \
+	img.timeinc.net img5.timeinc.net"
+SERVER_NAME="si-turbo.elasticbeanstalk.com"
+CDN="http://cdn.si.pageturbine.com"
+FRONTEND="http://si.pageturbine.com"
+MEMCACHED="memcached-pagespeed.qblvmc.cfg.usw2.cache.amazonaws.com"
 HEALTCHECK="/"
-FILTERS_ENABLED="sprite_images inline_preview_images resize_mobile_images resize_rendered_image_dimensions"
+FILTERS_ENABLED="defer_javascript"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
 CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
 	pagespeed ImplicitCacheTtlMs 3600000; \
-	pagespeed InPlaceRewriteDeadlineMs 30000; \
-	pagespeed RewriteDeadlinePerFlushMs 30000; \
-	pagespeed ImageRecompressionQuality 10;"
+	pagespeed UrlValuedAttribute a data-src image; \
+	pagespeed ImageRecompressionQuality 50;"
 IF_DESKTOP="Cookie: TI_PREFS=default;"
 IF_MOBILE="Cookie: TI_PREFS=phone;"
+WARMER_URL="http://si-turbo.elasticbeanstalk.com/"
+#DEBUG="true"

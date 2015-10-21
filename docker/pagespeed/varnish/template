@@ -9,7 +9,7 @@ include "devicedetect.vcl";
 # Block 1: Define upstream server's host and port.
 backend default {
   # Location of PageSpeed server.
-  .host = "127.0.0.1";
+  .host = "${SERVER_NAME}";
   .port = "8080";
   .probe = {
     .url = "${HEALTCHECK:-/}";
@@ -51,14 +51,14 @@ sub ps_capabilities {
   if (req.http.Accept ~ "image\/webp") {
     set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
   }
-  set req.http.Page-Speed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device + "/" + req.http.X-UA;
+  set req.http.PageSpeed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device + "/" + req.http.X-UA;
 }
 
 
 
 sub vcl_hash {
   # Block 3: Use the PS-CapabilityList value and the device for computing the hash.
-  hash_data(req.http.Page-Speed-Device);
+  hash_data(req.http.PageSpeed-Device);
 }
 
 # Block 3a: Define ACL for purge requests
@@ -90,7 +90,6 @@ sub vcl_hit {
   if (obj.ttl + obj.grace > 0s) {
     // Object is in grace, deliver it and automatically triggers a background fetch or pass it
     set req.http.X-PS-Grace = "true";
-    call pass_if_beacon;
     return (deliver);
   }
   
@@ -112,6 +111,7 @@ sub vcl_miss {
 sub vcl_purge {
   // restart request
   set req.method = "GET";
+  set req.http.X-After-Purge = "yes";
   return (restart);
 }
 
@@ -140,12 +140,6 @@ sub vcl_recv {
     }
   }
 
-  if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
-    // Skip the cache for .pagespeed. resource.  PageSpeed has its own
-    // cache for these, and these could bloat up the caching layer.
-    return (pass);
-  }
-  
   # call generate_user_agent_based_key;
   call ps_capabilities;
 
@@ -181,16 +175,24 @@ sub vcl_recv {
     }
     return (purge);
   }
-  
+
+  if (req.method != "GET" && req.method != "HEAD") {
+    // We only deal with GET and HEAD by default 
+    return (pass);
+  } 
+/*
   if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
+    // Skip the cache for .pagespeed. resource.  PageSpeed has its own
+    // cache for these, and these could bloat up the caching layer.
     return (pass);
   }
-  
+*/
   return (hash);
 }
 
 # Block 6: unset upstream cache control and varnish headers
 sub vcl_backend_response {
+  set beresp.http.PageSpeed-SourceCacheControl = beresp.http.Cache-Control;
   if (beresp.http.Content-Type ~ "text/html") {
     // For html responses, hide the upstream cache control headers.
     unset beresp.http.ETag;
@@ -199,17 +201,19 @@ sub vcl_backend_response {
     unset beresp.http.Cache-Control;
     unset beresp.http.Expires;
     unset beresp.http.Via;
-    unset beresp.http.X-Cache;
-    unset beresp.http.X-Age;
-    unset beresp.http.X-Varnish;
-    unset beresp.http.X-Varnish-Cache;
-    unset beresp.http.X-Varnish-Cache-Hits;
-    unset beresp.http.X-Varnish;
     unset beresp.http.Set-Cookie;
     unset beresp.http.X-Cache-Control;
     set beresp.http.X-Cache-Control = "no-cache, max-age=0";
-    // make sure the object is still cached in varnish for a miminum amount of time
-    set beresp.ttl   = ${TTL:-120}s;
+    
+    // If this request was issued after a purge, PageSpeed will not have yet optimized the page fully
+    if (bereq.http.X-After-Purge) {
+      // Mark as "Hit-For-Pass" for the next 30 seconds
+      set beresp.ttl = 30s;
+      set beresp.uncacheable = true;
+    } else {
+      // make sure the object is still cached in varnish for a minimum amount of time
+      set beresp.ttl   = ${TTL:-120}s;
+    }
   } 
   // grace every object for one hour (override with GRACE)
   set beresp.grace = ${GRACE:-3600}s;
@@ -217,46 +221,44 @@ sub vcl_backend_response {
 
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
-  unset resp.http.X-Varnish;
-  unset resp.http.X-Page-Speed;
   set resp.http.Vary = "Accept-Encoding";
-  if (req.http.Page-Speed-Device) {
-    set resp.http.Page-Speed-Device = req.http.Page-Speed-Device;
-    set resp.http.Vary = resp.http.Vary + ", Page-Speed-Device";
-  }
-  if (req.http.Page-Speed-Debug) {
-    set resp.http.Page-Speed-CapabilityList = req.http.PS-CapabilityList;
-    set resp.http.Page-Speed-Hits = obj.hits;
-  }
-  if (req.http.PS-ShouldBeacon) {
-  	set resp.http.Page-Speed-Beacon = "Yes";
-  }
-  if (obj.hits > 0) {
-    // it's a HIT
-    if (req.http.Page-Speed-Debug) {
-	    if (req.http.X-PS-Grace == "true") {
-	      set resp.http.Page-Speed-Cache = "GRACED";
-	    } else {
-	      set resp.http.Page-Speed-Cache = "HIT";
-	    }
+  if (req.http.PageSpeed-Device && resp.http.Content-Type ~ "text/html") {
+    set resp.http.PageSpeed-Device = req.http.PageSpeed-Device;
+    set resp.http.Vary = resp.http.Vary + ", PageSpeed-Device";
+    if (obj.hits > 0) {
+      // it's a HIT
+      // add a configurable extension to the ttl for downstream caches when the response is a HIT
+      if (!resp.http.Cache-Control || resp.http.Cache-Control ~ "max-age=0") {
+        set resp.http.Cache-Control="public, s-maxage=${S_MAXAGE:-120}, max-age=${MAXAGE:-60}";
+      } 
+      if (req.http.X-PS-Grace == "true") {
+        set resp.http.PageSpeed-Cache = "GRACED";
+      } else {
+         set resp.http.PageSpeed-Cache = "HIT";
+      }
+    } else {
+      // it's a MISS or a GRACE
+      if (resp.http.X-Cache-Control) {
+        set resp.http.Cache-Control = resp.http.X-Cache-Control;
+      }
+      if (req.http.X-PS-Grace == "true") {
+        set resp.http.PageSpeed-Cache = "GRACED";
+      } else {
+         set resp.http.PageSpeed-Cache = "MISS";
+      }
     }
-    // add a configurable extension to the ttl for downstream caches when the response is a HIT
-    if (resp.http.Cache-Control ~ "max-age=0") {
-      set resp.http.Cache-Control="public, s-maxage=${S_MAXAGE:-120}, max-age=0";
+    set resp.http.PageSpeed-Hits = obj.hits;
+    if (req.http.PS-ShouldBeacon) {
+  	  set resp.http.PageSpeed-Beacon = "Yes";
     }
-  } else {
-    // it's a MISS or a GRACE
-    if(resp.http.X-Cache-Control) {
-      set resp.http.Cache-Control = resp.http.X-Cache-Control;
-    }
-    if (req.http.Page-Speed-Debug) {
-	    if (req.http.X-PS-Grace == "true") {
-	      set resp.http.Page-Speed-Cache = "GRACED";
-	    } else {
-	      set resp.http.Page-Speed-Cache = "MISS";
-	    }
-    }    
   }
   unset resp.http.X-Cache-Control;
+  unset resp.http.X-Cache;
+  unset resp.http.X-Varnish;
+  unset resp.http.X-PageSpeed;
+  unset resp.http.Server;
+  unset resp.http.X-UA-Device;
+  unset resp.http.X-UA-Device-Group;
+  unset resp.http.X-Varnish-Cache;
   return (deliver);
 }

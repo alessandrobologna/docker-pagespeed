@@ -1,17 +1,22 @@
 #!/bin/bash
-WPTKEY="${1}"
-SITES=$(if [ -n "${2}" ]
+if [ -z "${WPTKEY}" ]
+then
+	echo "Please specify a valid WebPageTest.org key"
+	exit 1;
+fi
+SITES=$(if [ -n "${1}" ]
 then 
-	for site in "${2}"
+	for site in $@
 	do 
 		echo -n "configs/eb/${site} "
 	done
 else
-	echo "configs/eb/*"
+	echo "please specify the test targets"
+	exit 1;
 fi
 )
 
-LOCATION="Dulles:Chrome"
+LOCATION="${LOCATION:-Dulles:Chrome}"
 M_PARAMS="location=${LOCATION}.3GFast&mobile=1"
 D_PARAMS="location=${LOCATION}.Cable&mobile=0"
 TEST_PATH=${TEST_PATH:-/}
@@ -20,7 +25,7 @@ FILENAME="logs/testlog-$(date "+%Y-%m-%d:%H:%M:%S").log"
 
 # create a script suitable for webpagetest to change the CNAME for the test domain
 function make_script {
-	echo "setDnsName%09${BACKEND}%09${SERVER_NAME}%0anavigate%09http://${BACKEND}${SITE_TEST_PATH}"
+	echo "setDnsName%09${BACKEND}%09$(echo $FRONTEND|cut -d'/' -f 3)%0anavigate%09http://${BACKEND}${SITE_TEST_PATH}"
 }
 count=0
 echo "Warming up servers: "
@@ -79,10 +84,11 @@ do
 	b=$(curl -s -I "http://www.webpagetest.org/runtest.php?label=${BACKEND}+vanilla&url=http://${BACKEND}${TEST_PATH}&runs=1&fvonly=1&video=1&htmlbody=1&${M_PARAMS}&k=${WPTKEY}" | grep Location | awk '{print $2}' | cut -d '/' -f  5); 
 	c=$(curl -s -I "http://www.webpagetest.org/runtest.php?label=${BACKEND}+turbo&script=$(make_script)&runs=1&fvonly=1&video=1&htmlbody=1&${D_PARAMS}&k=${WPTKEY}" | grep Location | awk '{print $2}' | cut -d '/' -f  5); 
 	d=$(curl -s -I "http://www.webpagetest.org/runtest.php?label=${BACKEND}+vanilla&url=http://${BACKEND}${TEST_PATH}&runs=1&fvonly=1&video=1&htmlbody=1&${D_PARAMS}&k=${WPTKEY}" | grep Location | awk '{print $2}' | cut -d '/' -f  5); 
+	echo "# ${BACKEND}"
 	echo "http://www.webpagetest.org/video/compare.php?tests=${a},${b}" | tee -a ${FILENAME}
 	echo "http://www.webpagetest.org/video/compare.php?tests=${c},${d}" | tee -a ${FILENAME}
 	count=$(($count + 4))
 	
 done 
 echo  "Done, see results in ${FILENAME} (used ${count} API calls)"
-cat  ${FILENAME} | xargs open
+cat  ${FILENAME} | grep -v "^#" | xargs open

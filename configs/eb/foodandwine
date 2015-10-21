@@ -8,8 +8,8 @@ PROXY_DOMAINS="cdn-js.foodandwine.com \
 	speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com \
 	tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com \
 	cdn.tinypass.com"
-SERVER_NAME="app-accelerator-demo.elasticbeanstalk.com"
-FRONTEND="http://app-accelerator-demo.elasticbeanstalk.com"
+SERVER_NAME="app-accelerator-fw.elasticbeanstalk.com"
+FRONTEND="http://app-accelerator-fw.elasticbeanstalk.com"
 MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
 FILTERS_ENABLED="inline_preview_images resize_mobile_images lazyload_images \
 	convert_to_webp_lossless resize_rendered_image_dimensions\

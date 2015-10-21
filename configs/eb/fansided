@@ -1,0 +1,13 @@
+BACKEND=fansided.com
+PROXY_DOMAINS="cdn.fansided.com"
+	
+SERVER_NAME="fansided-turbo.elasticbeanstalk.com"
+FRONTEND="http://fansided-turbo.elasticbeanstalk.com"
+MEMCACHED="memcache-pagespeed.oeiwnb.cfg.use1.cache.amazonaws.com"
+
+FILTERS_ENABLED="inline_preview_images resize_mobile_images lazyload_images"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS="pagespeed MaxSegmentLength 250; \
+	pagespeed ImplicitCacheTtlMs 3600000;"
+WARMER_URL="http://localhost/"

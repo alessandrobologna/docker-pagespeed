@@ -1,0 +1,12 @@
+AWSConfigurationTemplateVersion: 1.1.0.0
+SolutionStack: 64bit Amazon Linux 2015.03 v2.0.2 running Docker 1.7.1
+OptionSettings:
+  aws:autoscaling:launchconfiguration:
+    RootVolumeSize: '30'
+    InstanceType: t2.large
+    IamInstanceProfile: aws-elasticbeanstalk-ec2-role
+  aws:elasticbeanstalk:command:
+    BatchSize: '30'
+    BatchSizeType: Percentage
+
+    

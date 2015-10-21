@@ -1,0 +1,35 @@
+#!/bin/bash
+# arguments:
+# $1 Beanstalk environment
+# $2 Memcache address
+# $3 (optional, if set to "delete" remove authorization)
+if [ -n "${2}" ]
+then
+	echo "${1} is configured to use Elastic Cache at ${2}, determining authorization"
+	environment=$(cat target/${1}/.elasticbeanstalk/config.yml | grep environment | awk '{print $2}') 
+	if [ -z "${environment}" ]
+	then 
+		echo "Could not determine current environment"
+		exit 1
+	fi
+	eb=$(aws ${EB_OPTIONS} ec2 describe-security-groups --filters Name=tag-value,Values=${environment} Name=tag-value,Values='AWSEBSecurityGroup' --query 'SecurityGroups[*].{ID:GroupId}' --output text)
+	if [ -z "${eb}" ]
+	then 
+		echo "Could not determine security group for ${environment}"
+		exit 1
+	fi
+	memcache=$(aws ${EB_OPTIONS} elasticache describe-cache-clusters --query CacheClusters[?ConfigurationEndpoint.Address==$(echo "\`${2}\`")].SecurityGroups[0].SecurityGroupId --output text)
+	if [ -z "${memcache}" ]
+	then 
+		echo "Could not determine security group for ${eb}"
+		exit 1
+	fi
+	if [ "${3}" = "delete" ]
+	then
+		echo "de-authorizing ${memcache} to access ${eb}"
+		aws ${EB_OPTIONS} ec2 revoke-security-group-ingress --group-id ${memcache} --protocol tcp --port 11211 --source-group ${eb}
+	else
+		echo "authorizing ${memcache} to access ${eb}"
+		aws ${EB_OPTIONS} ec2 authorize-security-group-ingress --group-id ${memcache} --protocol tcp --port 11211 --source-group ${eb}
+	fi
+fi

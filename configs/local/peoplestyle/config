@@ -1,29 +1,33 @@
-BACKEND="www.allyou.com"
-ORIGIN="www-delivery.allyou.com"
+BACKEND="www.peoplestylewatch.com"
 PROXY_DOMAINS=" \
-	cdn-jpg.allyou.com cdn-png.allyou.com cdn-media.allyou.com cdn-css.allyou.com cdn-js.allyou.com \
-	i0.wp.com i1.wp.com i2.wp.com \
+	www.peoplestylewatch.com/sites \
+	cdn-img.people.com \
 	native.sharethrough.com admin.brightcove.com cdn.optimizely.com \
-	fonts.timeinc.net tiads.allyou.com img5.timeinc.net \
+	tiads.people.com img2.timeinc.net img5.timeinc.net \
 	js.revsci.net pagead2.googlesyndication.com \
-	tags.tiqcdn.com c.betrad.com s.skimresources.com wms.assoc-amazon.com www.googleadservices.com widgets.outbrain.com"
+	tags.tiqcdn.com c.betrad.com s.skimresources.com wms.assoc-amazon.com www.googleadservices.com widgets.outbrain.com cdn.api.onebot.timeinc.com"
+PROXY_HTTPS_DOMAINS="secure-fonts.timeinc.net"
 SERVER_NAME="vespa.localhost"
 CDN="cdn.vespa.localhost"
-FILTERS_ENABLED="defer_javascript prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
-	convert_to_webp_lossless insert_image_dimensions resize_rendered_image_dimensions \
+FILTERS_ENABLED="defer_javascript prioritize_critical_css convert_jpeg_to_webp \
+	convert_to_webp_lossless \
 	rewrite_style_attributes inline_google_font_css"
+FILTERS_DISABLED="inline_images resize_images"
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
 CUSTOM_SETTINGS=" \
-	pagespeed UrlValuedAttribute img data-highres400-src image; \
-	pagespeed UrlValuedAttribute img data-highres500-src image; \
+	pagespeed ImageRecompressionQuality 50; \
+	pagespeed UrlValuedAttribute img data-src image; \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
 MAXAGE="300"
-CORS="http://www.allyou.com"
 HIDE_PROXY_HEADERS="true"
+HIDE_BACKEND_HEADERS="true"
+HEALTCHECK="/people/stylewatch"
+CORS="*"
 NGINX_CUSTOM_OPTIONS="\
 	proxy_set_header Accept-Encoding \"\"; \
 	subs_filter </body> '<script type=\"text/javascript\" src=\"/newrelic/metrics.js\"></script>';\
 	subs_filter </head> '<style>.wf-loading body{opacity:0} .wf-active body, .wf-inactive body {opacity:1;transition:0.2s}</style><script type=\"text/javascript\" pagespeed_no_defer src=\"/adobe/typekit.js\"></script></head>'; \
 "
+DEBUG="true"

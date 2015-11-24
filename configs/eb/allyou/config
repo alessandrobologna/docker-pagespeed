@@ -19,8 +19,6 @@ FILTERS_ENABLED="defer_javascript prioritize_critical_css inline_preview_images 
 FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
 FILTERS_ON="UseExperimentalJsMinifier"
 CUSTOM_SETTINGS=" \
-	pagespeed EnableFilters insert_ga; \
-	pagespeed AnalyticsID UA-69497487-1; \
 	pagespeed UrlValuedAttribute img data-highres400-src image; \
 	pagespeed UrlValuedAttribute img data-highres500-src image; \
 	pagespeed MaxCombinedJsBytes 10000000; \

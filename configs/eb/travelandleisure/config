@@ -1,0 +1,29 @@
+BACKEND="www.travelandleisure.com"
+ORIGIN="delivery.travelandleisure.com"
+PROXY_DOMAINS="\
+	www.travelandleisure.com/sites img.timeinc.net img2.timeinc.net  \
+	tiads.timeinc.net tiads.travelandleisure.com \
+	cdn.optimizely.com admin.brightcove.com a.postrelease.com widgets.outbrain.com assets.pinterest.com js.revsci.net tags.tiqcdn.com"
+EB_DOMAIN="travelandleisure.elasticbeanstalk.com"
+SERVER_NAME="travelandleisure.lightweb.io"
+CDN="cdn1.travelandleisure.lightweb.io cdn2.travelandleisure.lightweb.io cdn3.travelandleisure.lightweb.io"
+MEMCACHED="memcached-pagespeed.qblvmc.cfg.usw2.cache.amazonaws.com"
+FILTERS_ENABLED="prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
+	convert_to_webp_lossless resize_rendered_image_dimensions \
+	rewrite_style_attributes inline_google_font_css"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS=" \
+	pagespeed ImageRecompressionQuality 50; \
+	pagespeed MaxCombinedJsBytes 10000000; \
+	pagespeed ImplicitCacheTtlMs 3600000;"
+MAXAGE="300"
+CORS="http://travelandleisure.lightweb.io"
+HIDE_PROXY_HEADERS="true"
+HIDE_BACKEND_HEADERS="true"
+NGINX_CUSTOM_OPTIONS="\
+	proxy_set_header Accept-Encoding \"\"; \
+	subs_filter </body> '<script type=\"text/javascript\" src=\"/newrelic/metrics.js\"></script>';\
+"
+IF_DESKTOP="Cookie: TI_PREFS=default;"
+IF_MOBILE="Cookie: TI_PREFS=phone;"

@@ -1,0 +1,25 @@
+BACKEND="www.instyle.com"
+ORIGIN="delivery.instyle.com"
+BACKENDS="*.instyle.com"
+PROXY_DOMAINS="img.timeinc.net img5.timeinc.net tiads.timeinc.net fonts.timeinc.net \
+	www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net \
+	s.skimresources.com admin.brightcove.com \
+	speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com sportsillustrated.ep.livefyre.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com"
+EB_DOMAIN="instyle.elasticbeanstalk.com"
+SERVER_NAME="instyle.lightweb.io"
+CDN="cdn1.instyle.lightweb.io cdn2.instyle.lightweb.io cdn3.instyle.lightweb.io"
+MEMCACHED="memcached-pagespeed.qblvmc.cfg.usw2.cache.amazonaws.com"
+FILTERS_ENABLED="prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
+	convert_to_webp_lossless insert_image_dimensions resize_rendered_image_dimensions \
+	rewrite_style_attributes inline_google_font_css"
+FILTERS_OFF="AvoidRenamingIntrospectiveJavascript"
+FILTERS_ON="UseExperimentalJsMinifier"
+CUSTOM_SETTINGS=" \
+	pagespeed UrlValuedAttribute img data-src image; \
+	pagespeed ImageRecompressionQuality 50; \
+	pagespeed MaxCombinedJsBytes 10000000; \
+	pagespeed ImplicitCacheTtlMs 3600000;"
+MAXAGE="300"
+CORS="http://instyle.lightweb.io"
+HIDE_PROXY_HEADERS="true"
+HIDE_BACKEND_HEADERS="true"

@@ -2,3 +2,5 @@
 target/*
 logs/*.log
 .project
+configs/saved/*
+.config.env

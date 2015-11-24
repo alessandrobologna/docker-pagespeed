@@ -37,7 +37,7 @@ Then run `make deploy myslowsite` and wait until it's done. You should have a si
   - BACKEND: This is the address of the origin servers (for instance, origin.myslowsite.com)
   - BACKENDS: If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that pagespeed can handle more efficienlty by fetching resources from the origin. 
   - SERVER_NAME: This is the plain hostname, so www.mysite.com.
-  - FRONTEND: This is the url for the hostname that you will use, facing the internet. Typically, http://www.mysite.com
+  - FRONTEND: This is the domain that you will use, facing the internet. Typically, www.mysite.com
   - PROXY_DOMAINS: (Optional) This is a white space delimited list of domains that your site is fetching resources from. Third party JS, CSS, images. They all go there. The resources they are serving will be optimized and served from www.mysite.com/proxy/the.other.domain
   - PROXY_HTTPS_DOMAINS: (Optional) Same as above, but for third party that want you to use their ssl servers.
   - COOKIES: if cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 

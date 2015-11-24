@@ -6,14 +6,15 @@ $(eval $(ARGUMENT):;@:)
 checkarg:
 	@if [ -z "${ARGUMENT}" ]; then echo "missing required argument"; exit 1; fi
 	
-run: checkarg build
+run: checkarg
 	@echo "Starting  docker-compose for ${ARGUMENT}"
-	@eval $$(bash make-env ${ARGUMENT} local) \
-		&& docker ps -qa | xargs docker rm -fv && docker-compose up -d && docker-compose logs
-	
-build:
-	@echo "Building local docker-compose stack"
-	@docker-compose build
+	@eval $$(bash scripts/environment ${ARGUMENT} local) \
+		&& SITE=${ARGUMENT} && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' templates/docker-compose.yml)\"")" > "docker-compose.yml" 
+	@docker ps -qa | xargs docker rm -fv && docker-compose build && docker-compose  up -d && docker-compose logs
+
+scale: checkarg 
+	@echo "Scaling pagespeed to ${ARGUMENT} containers"
+	@docker-compose scale pagespeed=${ARGUMENT} && docker-compose logs
 	
 push: checkarg
 	@echo "Building and pushing images to docker hub ${ARGUMENT} repository"
@@ -22,27 +23,30 @@ push: checkarg
 
 # The following rules are for Elastic Beanstalk deployment
 %.zip: configs/eb/% 
-	@if [ ! -f "$<" ]; then echo "Could not find $<"; exit 1; fi
+	@if [ ! -f "$</config" ]; then echo "Could not find $</config"; exit 1; fi
 	@echo "Building configuration $< for Amazon Beanstalk"
 	@rm -rf target/$(<F)/.ebextensions 
 	@rm -f target/$(<F)/*.zip 
 	@mkdir -p target/$(<F)/.ebextensions
-	@echo -e "option_settings:\n$$(cat $< | cut -d '#' -f 1 | awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' | grep "=" |  while IFS='=' read -r name value; do echo "  - option_name: $$name\n    value: $$value"; done)" > target/$(<F)/.ebextensions/app.config
-	@cp Dockerrun.aws.json target/$(<F)/Dockerrun.aws.json
+	@echo -e "option_settings:\n$$(cat $</config | cut -d '#' -f 1 | awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' | grep "=" | while IFS='=' read -r name value; do echo "  - option_name: $$name\n    value: $$value"; done)" > target/$(<F)/.ebextensions/app.config
+	@[ -d "$</files" ] && echo -e "files:\n  \"/tmp/files.b64\":\n    content: \"$$(tar -C "$</files"  -zcf - ./  | base64)\"" >> target/$(<F)/.ebextensions/app.config
+	@eval $$(bash scripts/environment ${ARGUMENT} eb) \
+	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' templates/Dockerrun.aws.json)\"")" > target/$(<F)/Dockerrun.aws.json 
 	@cd target/$(<F) && zip -r app.zip Dockerrun.aws.json .ebextensions 
 
 # runs eb init and create enviroment
 init: checkarg 
 	@mkdir -p target/${ARGUMENT}
-	@if [ ! -f configs/eb/${ARGUMENT} ]; then  echo "missing ${ARGUMENT} in configs/eb"; exit 1; fi
-	@eval $$(bash make-env ${ARGUMENT} eb) \
+	@if [ ! -f configs/eb/${ARGUMENT}/config ]; then  echo "missing config in configs/eb/${ARGUMENT}"; exit 1; fi
+	@eval $$(bash scripts/environment ${ARGUMENT} eb) \
 	 && rm -rf target/${ARGUMENT} \
 	 && make "${ARGUMENT}.zip" \
 	 && cd target/${ARGUMENT} && git init && git add Dockerrun.aws.json .ebextensions app.zip && git commit -m "$$(date)" \
-	 && eb init ${AWS_OPTIONS} \
-	 && mkdir -p .elasticbeanstalk/saved_configs && cp ../../default.cfg.yml .elasticbeanstalk/saved_configs/default.cfg.yml \
-	 && eb create --cname $$(echo $${SERVER_NAME} | cut -d '.' -f1) \
-	 && cd ../.. && bash make-ingress ${ARGUMENT} $${MEMCACHED} \
+	 && eb init ${EB_OPTIONS} \
+	 && mkdir -p .elasticbeanstalk/saved_configs \
+	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' ../../templates/default.cfg.yml)\"")" > .elasticbeanstalk/saved_configs/default.cfg.yml \
+	 && eb create --cname $$(echo $${EB_DOMAIN:-$${SERVER_NAME}} | sed s/.elasticbeanstalk.com//g) \
+	 && cd ../.. && bash scripts/memcached ${ARGUMENT} $${MEMCACHED} \
 	 && make deploy ${ARGUMENT} \
 	 && cd target/${ARGUMENT} && eb open
 
@@ -50,8 +54,8 @@ init: checkarg
 terminate: checkarg 
 	@read -r -p "Are you sure? [y/N] " response; \
 		[[ $$response =~ ^([yY][eE][sS]|[yY])$$ ]] \
-		&& eval $$(bash make-env ${ARGUMENT} eb) \
-		&& bash make-ingress ${ARGUMENT} $${MEMCACHED} delete \
+		&& eval $$(bash scripts/environment ${ARGUMENT} eb) \
+		&& bash scripts/memcached "${ARGUMENT}" "$${MEMCACHED}" delete \
 		&& cd target/${ARGUMENT}  && eb terminate --force
 		
 
@@ -69,8 +73,14 @@ deploy:
 		do (if [ -d "target/$${target}/.elasticbeanstalk" ]; then echo "Deploying $$target";  make eb $$target && cd target/$$target && eb deploy  &> "../../logs/deploy-$$target.log"; fi &) done; \
 		sleep 5; echo "done, tailing logs, safe to ctrl-c"; tails=$$(for target in ${ARGUMENT}; do echo "logs/deploy-$$target.log"; done); tail -f $$tails
 
+
+cloudfront: checkarg
+	@if [ ! -f configs/eb/${ARGUMENT}/config ]; then  echo "missing config in configs/eb/${ARGUMENT}"; exit 1; fi
+	@eval $$(bash scripts/environment ${ARGUMENT} eb) \
+	&& bash scripts/cloudfront ${ARGUMENT}
+	
 logs: checkarg 
-	cd target/${ARGUMENT} && eb logs ${EB_OPTIONS}
+	@cd target/${ARGUMENT} && eb logs ${EB_OPTIONS}
 	
 speedtest:
-	@bash webpagetest.sh ${ARGUMENT}
+	@bash scripts/speedtest ${ARGUMENT}

@@ -1,0 +1,6 @@
+{
+    "Comment": "Record for ${FRONTEND} for ${CLOUDFRONT}",
+    "Changes": [
+        ${CHANGES}
+    ]
+}

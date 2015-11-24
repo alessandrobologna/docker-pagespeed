@@ -1,3 +1,0 @@
-#!/bin/bash
-cat configs/${2}/${1} | cut -d '#' -f 1 |  awk '{if (sub(/\\$/,"")) printf "%s", $0; else print $0}' \
-	  | sed "s/^/export /g" | grep "=" 

@@ -1,0 +1,59 @@
+#!/bin/bash
+
+AWS="aws ${EB_OPTIONS}"
+SITE=$1
+FRONTEND="${FRONTEND:-${SERVER_NAME}}"
+ALIASES="${FRONTEND} ${CDN}"
+
+
+# build the configuration for cloudfront
+
+SEP=""
+ITEMS=$(
+for alias in ${ALIASES}
+	do echo -n "$SEP\"$alias\" "
+	SEP=","
+done)
+            
+            
+echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/cloudfront.json)\"")" > target/${SITE}/cloudfront.json 
+CLOUDFRONT=$($AWS cloudfront create-distribution --query Distribution.DomainName --output=text --distribution-config file://${PWD}/target/${SITE}/cloudfront.json)
+
+echo "Created Cloudfront distribution ${CLOUDFRONT} for origin ${FRONTEND}"
+
+# split the name, assuming that the domain is the last two parts
+DOMAIN=${2:-$(echo ${FRONTEND}|rev|cut -d '.' -f -2|rev)}
+
+# finally, check if the required DNS cname is set to the load balancer using route53
+ZONE=$($AWS route53 list-hosted-zones --query "HostedZones[?Name==\`${DOMAIN}.\`].Id" --output text)
+if [[ -n "${ZONE}" ]]
+then
+	# check if the record already exists
+	QUERY=$($AWS route53 list-resource-record-sets --hosted-zone-id ${ZONE} --query "ResourceRecordSets[?Name==\`${FRONTEND}.\`].Name" --output text)
+	if [[ -z "${QUERY}" ]]
+	then
+		SEP=""
+		CHANGES=$(for CNAME in ${ALIASES}
+		do
+			echo -n "${SEP}$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changes.json)\"")"  
+			SEP=","
+		done
+		)
+		
+		echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changeset.json)\"")" > target/${SITE}/changeset.json 
+		echo "Creating records for ${ITEMS}"
+		CHANGEID=$($AWS route53 change-resource-record-sets --hosted-zone-id ${ZONE} --change-batch file://${PWD}/target/${SITE}/changeset.json  --query 'ChangeInfo.Id' --output text)
+		echo -n "Waiting for ${CHANGEID} to be propagated"
+		until [[ "$STATUS" == "INSYNC" ]]
+		do
+			sleep 5
+			echo -n "."
+			STATUS=$($AWS route53 get-change --id ${CHANGEID} --query 'ChangeInfo.Status' --output text)
+		done
+		echo "Records for ${ITEMS} created and propagated successfully"
+	else
+		echo "Already found a record for ${QUERY} in ${DOMAIN}, please delete it before attempting again"
+	fi
+else
+	echo "Cannot find an hosted zone for ${DOMAIN} in your account, skipping alias generation"
+fi

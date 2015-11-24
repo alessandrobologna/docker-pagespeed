@@ -1,5 +1,5 @@
 pagespeed:
-  env_file: configs/local/travelandleisure/.config.env
+  env_file: configs/local/${SITE}/.config.env
   build: docker/pagespeed
   ports:
     - "80"

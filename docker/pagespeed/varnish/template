@@ -34,11 +34,26 @@ sub browserdetect {
   if (req.http.user-agent ~ "Chrome") {
     set req.http.X-UA = "chrome";
   } 
+  if (req.http.user-agent ~ "CloudFront") {
+    set req.http.X-UA = "cloudfront";
+  } 
 }
 
 sub ps_capabilities {
   call browserdetect; 
-  call devicedetect; 
+  if (req.http.X-UA ~ "cloudfront") {
+  	if (req.http.CloudFront-Is-Mobile-Viewer == "true") {
+  	  set req.http.X-UA-Device="mobile";
+  	} elif (req.http.CloudFront-Is-Tablet-Viewer == "true") {
+  	  set req.http.X-UA-Device="tablet";
+  	} elif (req.http.CloudFront-Is-SmartTV-Viewer == "true") {
+  	  set req.http.X-UA-Device="tv";
+  	} else {
+  	  set req.http.X-UA-Device="desktop";
+  	}
+  } else {
+    call devicedetect;
+  } 
   if (req.http.X-UA == "msie" || req.http.X-UA == "default") {
     if (req.http.X-UA-Device ~ "mobile") {
       set req.http.PS-CapabilityList="TinyScreen.SkipUADependentOptimizations:";
@@ -51,14 +66,14 @@ sub ps_capabilities {
   if (req.http.Accept ~ "image\/webp") {
     set req.http.PS-CapabilityList = "ll,ii,dj,jw,ws:";
   }
-  set req.http.PageSpeed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device + "/" + req.http.X-UA;
+  set req.http.X-Page-Speed-Device=req.http.PS-CapabilityList + " " +req.http.X-UA-Device + "/" + req.http.X-UA;
 }
 
 
 
 sub vcl_hash {
-  # Block 3: Use the PS-CapabilityList value and the device for computing the hash.
-  hash_data(req.http.PageSpeed-Device);
+  // Use the PS-CapabilityList value and the detected device for computing the hash
+  hash_data(req.http.X-Page-Speed-Device);
 }
 
 # Block 3a: Define ACL for purge requests
@@ -77,7 +92,7 @@ sub pass_if_beacon {
 sub vcl_hit {
   // Send 5% of the HITs to the backend for instrumentation.
   if (obj.http.Content-Type ~ "text/html" && (req.url ~ "(?i)beacon=(true|yes)" 
-  	|| std.random(0, 100 ) <= 5 || obj.hits == 1)) {
+    || std.random(0, 100 ) <= 5 || obj.hits == 1)) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
   }
   
@@ -88,7 +103,7 @@ sub vcl_hit {
   }
   
   if (obj.ttl + obj.grace > 0s) {
-    // Object is in grace, deliver it and automatically triggers a background fetch or pass it
+    // Object is in grace, deliver it and automatically triggers a background fetch
     set req.http.X-PS-Grace = "true";
     return (deliver);
   }
@@ -100,7 +115,7 @@ sub vcl_hit {
 
 sub vcl_miss {
   // Send 25% of the MISSes to the backend for instrumentation.
-  if (req.url ~ "(?i)beacon=(true|yes)" || std.random(0, 100) <= 0) {
+  if (req.url ~ "(?i)beacon=(true|yes)" || std.random(0, 100) <= 25) {
     set req.http.PS-ShouldBeacon = "${SECRET_KEY}";
     return (pass);
   }
@@ -111,13 +126,16 @@ sub vcl_miss {
 sub vcl_purge {
   // restart request
   set req.method = "GET";
-  set req.http.X-After-Purge = "yes";
+  set req.http.X-Page-Speed-After-Purge = "yes";
   return (restart);
 }
 
 # Block 4: In vcl_recv, on receiving a request, call the method responsible for
 # generating the User-Agent based key for hashing into the cache.
 sub vcl_recv {
+  // do not accept external beaconing requests
+  unset req.http.PS-ShouldBeacon;
+
   // determine a client identity based on the X-Forwarded-For header, and fallback to the ip
   set client.identity = std.ip(regsub(req.http.X-Forwarded-For, "[, ].*$", ""), client.ip);
   
@@ -127,6 +145,12 @@ sub vcl_recv {
   }
   
   set req.http.Host = "${SERVER_NAME}";
+
+  # call generate_user_agent_based_key;
+  call ps_capabilities;
+  
+  # unset the user agent, as PageSpeed will still try to use if it's available
+  unset req.http.User-Agent;
   
   if (req.http.Cookie) {
     set req.http.Cookie = ";" + req.http.Cookie;
@@ -139,9 +163,12 @@ sub vcl_recv {
         unset req.http.Cookie;
     }
   }
-
-  # call generate_user_agent_based_key;
-  call ps_capabilities;
+  
+  
+  if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
+    // Skip the cache for .pagespeed. resource.  PageSpeed has its own cache for these, and these could bloat up the caching layer.
+    return (pass);
+  }
 
   // optionally add debug headers in the response (set in /start)
   ${DEBUG_HEADERS}
@@ -180,85 +207,84 @@ sub vcl_recv {
     // We only deal with GET and HEAD by default 
     return (pass);
   } 
-/*
-  if (req.url ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+") {
-    // Skip the cache for .pagespeed. resource.  PageSpeed has its own
-    // cache for these, and these could bloat up the caching layer.
-    return (pass);
-  }
-*/
   return (hash);
 }
 
 # Block 6: unset upstream cache control and varnish headers
 sub vcl_backend_response {
-  set beresp.http.PageSpeed-SourceCacheControl = beresp.http.Cache-Control;
-  if (beresp.http.Content-Type ~ "text/html") {
-    // For html responses, hide the upstream cache control headers.
-    unset beresp.http.ETag;
-    unset beresp.http.Pragma;
-    unset beresp.http.Last-Modified;
-    unset beresp.http.Cache-Control;
-    unset beresp.http.Expires;
-    unset beresp.http.Via;
-    unset beresp.http.Set-Cookie;
-    unset beresp.http.X-Cache-Control;
-    set beresp.http.X-Cache-Control = "no-cache, max-age=0";
-    
-    // If this request was issued after a purge, PageSpeed will not have yet optimized the page fully
-    if (bereq.http.X-After-Purge) {
-      // Mark as "Hit-For-Pass" for the next 30 seconds
-      set beresp.ttl = 30s;
-      set beresp.uncacheable = true;
-    } else {
-      // make sure the object is still cached in varnish for a minimum amount of time
-      set beresp.ttl   = ${TTL:-120}s;
-    }
+  // If this request was issued after a purge, PageSpeed will not have yet optimized the page fully
+  if (bereq.http.X-Page-Speed-After-Purge) {
+    // Mark as "Hit-For-Pass" for the next 15 seconds
+    set beresp.ttl = 15s;
+    set beresp.uncacheable = true;
+    set beresp.http.X-Page-Speed-After-Purge="Yes";
   } 
-  // grace every object for one hour (override with GRACE)
-  set beresp.grace = ${GRACE:-3600}s;
+  
+  // make sure the object is still cached in varnish for a minimum amount of time
+  if (beresp.ttl == 0s) {
+    set beresp.ttl   = ${TTL:-120}s;
+  }
+  set beresp.http.X-Page-Speed-TTL=beresp.ttl;
+
+  if (!bereq.http.PS-ShouldBeacon) {
+    // grace every object that was not beaconed for one hour (override with GRACE)
+    set beresp.grace = ${GRACE:-3600}s;
+  }
 }
 
 # Block 7: Add a header for identifying cache hits/misses.
 sub vcl_deliver {
   set resp.http.Vary = "Accept-Encoding";
-  if (req.http.PageSpeed-Device && resp.http.Content-Type ~ "text/html") {
-    set resp.http.PageSpeed-Device = req.http.PageSpeed-Device;
-    set resp.http.Vary = resp.http.Vary + ", PageSpeed-Device";
+  if (req.http.X-Page-Speed-Device && resp.http.Content-Type ~ "text/html") {
+    set resp.http.X-Page-Speed-Hits = obj.hits;
+    set resp.http.X-Page-Speed-Device = req.http.X-Page-Speed-Device;
     if (obj.hits > 0) {
-      // it's a HIT
-      // add a configurable extension to the ttl for downstream caches when the response is a HIT
-      if (!resp.http.Cache-Control || resp.http.Cache-Control ~ "max-age=0") {
-        set resp.http.Cache-Control="public, s-maxage=${S_MAXAGE:-120}, max-age=${MAXAGE:-60}";
-      } 
       if (req.http.X-PS-Grace == "true") {
-        set resp.http.PageSpeed-Cache = "GRACED";
+        set resp.http.X-Page-Speed-Cache = "GRACED";
+        // don't cache on downstream servers for  graced responses
+        set resp.http.Cache-Control="no-cache, max-age=0";
       } else {
-         set resp.http.PageSpeed-Cache = "HIT";
+        // it's a HIT
+        set resp.http.X-Page-Speed-Cache = "HIT";
+        if (std.integer(resp.http.Age,0) > ${MINAGE:-60}) {
+          // after a few seconds that the response is a HIT, there's a reasonable certainty that it has been purged and then rewritten to a fair extent, so
+          // add a configurable extension to the ttl for downstream caches 
+          if (std.integer(resp.http.Age,0) < ${MAXAGE:-120}) {
+            // still quite new cannot risk keep in downstream for too long
+            set resp.http.Cache-Control="public, max-age=" + (${MAXAGE:-120} - std.integer(resp.http.Age,0));
+          } else {
+            // this response has been in cache for a while, downstream can keep it for much longer (up to the source TTL)
+            set resp.http.Cache-Control="public, max-age=" + ${MAX_DOWNSTREAM_AGE:-(std.integer(regsub(resp.http.X-Page-Speed-TTL,"([0-9]+)(\.([0-9]+))?","\1"),${MAXAGE:-60}) - std.integer(resp.http.Age,0))};
+          }
+        } else {
+          set resp.http.Cache-Control="no-cache, max-age=0";
+        }
       }
     } else {
-      // it's a MISS or a GRACE
-      if (resp.http.X-Cache-Control) {
-        set resp.http.Cache-Control = resp.http.X-Cache-Control;
-      }
-      if (req.http.X-PS-Grace == "true") {
-        set resp.http.PageSpeed-Cache = "GRACED";
+      // it's a MISS or is PASS
+      if (req.http.PS-ShouldBeacon) {
+        set resp.http.X-Page-Speed-Beaconed = "Yes";
+        // don't cache on downstream servers for beaconed responses
+        set resp.http.Cache-Control="private, max-age=0";
       } else {
-         set resp.http.PageSpeed-Cache = "MISS";
+        set resp.http.Cache-Control="no-cache, max-age=0";
       }
-    }
-    set resp.http.PageSpeed-Hits = obj.hits;
-    if (req.http.PS-ShouldBeacon) {
-  	  set resp.http.PageSpeed-Beacon = "Yes";
+      set resp.http.X-Page-Speed-Cache = "MISS";
     }
   }
-  unset resp.http.X-Cache-Control;
-  unset resp.http.X-Cache;
-  unset resp.http.X-Varnish;
-  unset resp.http.X-PageSpeed;
-  unset resp.http.Server;
-  unset resp.http.X-UA-Device;
-  unset resp.http.X-UA-Device-Group;
-  unset resp.http.X-Varnish-Cache;
+  if (req.http.X-Page-Speed-Debug) {
+    set resp.http.X-Page-Speed-Seen-User-Agent = req.http.User-Agent;
+    set resp.http.X-Page-Speed-Seen-Accept = req.http.Accept;
+  } else {
+    unset resp.http.X-Page-Speed-Cache;
+    unset resp.http.X-Page-Speed-Hits;
+    unset resp.http.X-Page-Speed-Device;
+    unset resp.http.X-Page-Speed;
+    unset resp.http.X-Varnish;
+    unset resp.http.X-Page-Speed-TTL;
+  }
+  ${CORS}  
+  ${VARNISH_UNSET_RESPONSE_HEADERS}
+  
   return (deliver);
 }

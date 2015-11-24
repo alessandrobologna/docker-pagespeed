@@ -1,0 +1,13 @@
+{
+	"Action": "CREATE",
+	"ResourceRecordSet": {
+	    "Name": "${CNAME}",
+	    "Type": "CNAME",
+	    "TTL": 300,
+	    "ResourceRecords": [
+	        {
+	            "Value": "${CLOUDFRONT}"
+	        }
+	    ]
+	}
+}

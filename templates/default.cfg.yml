@@ -1,0 +1,16 @@
+AWSConfigurationTemplateVersion: 1.1.0.0
+SolutionStack: 64bit Amazon Linux 2015.09 v2.0.4 running Docker 1.7.1
+OptionSettings:
+  aws:autoscaling:launchconfiguration:
+    RootVolumeSize: '${AWS_EB_ROOT_VOLUME_SIZE:-30}'
+    InstanceType: ${AWS_EW_INSTANCE_TYPE:-t2.large}
+    IamInstanceProfile: ${AWS_EB_ROLE:-aws-elasticbeanstalk-ec2-role}
+  aws:elasticbeanstalk:application:
+    Application Healthcheck URL: ${HEALTCHECK:-/}
+  aws:elasticbeanstalk:monitoring:
+    Automatically Terminate Unhealthy Instances: 'true'
+  aws:elasticbeanstalk:command:
+    BatchSize: '30'
+    BatchSizeType: Percentage
+
+    

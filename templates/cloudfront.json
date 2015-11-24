@@ -1,0 +1,211 @@
+{
+    "Comment": "pagespeed distribution for ${SERVER_NAME}",
+    "CacheBehaviors": {
+        "Items": [
+            {
+                "TrustedSigners": {
+                    "Enabled": false,
+                    "Quantity": 0
+                },
+                "TargetOriginId": "${EB_DOMAIN}",
+                "ViewerProtocolPolicy": "allow-all",
+                "ForwardedValues": {
+                    "Headers": {
+                        "Items": [
+                            "Accept"
+                        ],
+                        "Quantity": 1
+                    },
+                    "Cookies": {
+                        "Forward": "none"
+                    },
+                    "QueryString": false
+                },
+                "MaxTTL": 31536000,
+                "PathPattern": "*.pagespeed.*.webp",
+                "SmoothStreaming": false,
+                "DefaultTTL": 86400,
+                "AllowedMethods": {
+                    "Items": [
+                        "HEAD",
+                        "GET"
+                    ],
+                    "CachedMethods": {
+                        "Items": [
+                            "HEAD",
+                            "GET"
+                        ],
+                        "Quantity": 2
+                    },
+                    "Quantity": 2
+                },
+                "MinTTL": 0
+            },
+            {
+                "TrustedSigners": {
+                    "Enabled": false,
+                    "Quantity": 0
+                },
+                "TargetOriginId": "${EB_DOMAIN}",
+                "ViewerProtocolPolicy": "allow-all",
+                "ForwardedValues": {
+                    "Headers": {
+                        "Quantity": 0
+                    },
+                    "Cookies": {
+                        "Forward": "none"
+                    },
+                    "QueryString": false
+                },
+                "MaxTTL": 31536000,
+                "PathPattern": "*.pagespeed.*",
+                "SmoothStreaming": false,
+                "DefaultTTL": 86400,
+                "AllowedMethods": {
+                    "Items": [
+                        "HEAD",
+                        "GET"
+                    ],
+                    "CachedMethods": {
+                        "Items": [
+                            "HEAD",
+                            "GET"
+                        ],
+                        "Quantity": 2
+                    },
+                    "Quantity": 2
+                },
+                "MinTTL": 0
+            },
+            {
+                "TrustedSigners": {
+                    "Enabled": false,
+                    "Quantity": 0
+                },
+                "TargetOriginId": "${EB_DOMAIN}",
+                "ViewerProtocolPolicy": "allow-all",
+                "ForwardedValues": {
+                    "Headers": {
+                        "Quantity": 0
+                    },
+                    "Cookies": {
+                        "Forward": "none"
+                    },
+                    "QueryString": false
+                },
+                "MaxTTL": 31536000,
+                "PathPattern": "/${PROXY_PATH:-_assets}/",
+                "SmoothStreaming": false,
+                "DefaultTTL": 86400,
+                "AllowedMethods": {
+                    "Items": [
+                        "HEAD",
+                        "GET"
+                    ],
+                    "CachedMethods": {
+                        "Items": [
+                            "HEAD",
+                            "GET"
+                        ],
+                        "Quantity": 2
+                    },
+                    "Quantity": 2
+                },
+                "MinTTL": 0
+            }
+        ],
+        "Quantity": 3
+    },
+    "Logging": {
+        "Bucket": "${EB_DOMAIN}.s3.amazonaws.com",
+        "Prefix": "",
+        "Enabled": true,
+        "IncludeCookies": false
+    },
+    "WebACLId": "",
+    "Origins": {
+        "Items": [
+            {
+                "OriginPath": "",
+                "CustomOriginConfig": {
+                    "OriginProtocolPolicy": "http-only",
+                    "HTTPPort": 80,
+                    "HTTPSPort": 443
+                },
+                "Id": "${EB_DOMAIN}",
+                "DomainName": "${EB_DOMAIN}"
+            }
+        ],
+        "Quantity": 1
+    },
+    "DefaultRootObject": "",
+    "PriceClass": "PriceClass_All",
+    "Enabled": true,
+    "DefaultCacheBehavior": {
+        "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+        },
+        "TargetOriginId": "${EB_DOMAIN}",
+        "ViewerProtocolPolicy": "allow-all",
+        "ForwardedValues": {
+            "Headers": {
+                "Items": [
+                    "Accept",
+                    "CloudFront-Is-Desktop-Viewer",
+                    "CloudFront-Is-Mobile-Viewer",
+                    "CloudFront-Is-SmartTV-Viewer",
+                    "CloudFront-Is-Tablet-Viewer"
+                ],
+                "Quantity": 5
+            },
+            "Cookies": {
+                "Forward": "none"
+            },
+            "QueryString": true
+        },
+        "MaxTTL": 31536000,
+        "SmoothStreaming": false,
+        "DefaultTTL": 86400,
+        "AllowedMethods": {
+            "Items": [
+                "HEAD",
+                "DELETE",
+                "POST",
+                "GET",
+                "OPTIONS",
+                "PUT",
+                "PATCH"
+            ],
+            "CachedMethods": {
+                "Items": [
+                    "HEAD",
+                    "GET"
+                ],
+                "Quantity": 2
+            },
+            "Quantity": 7
+        },
+        "MinTTL": 0
+    },
+    "CallerReference": "$(date +%s)",
+    "ViewerCertificate": {
+        "CloudFrontDefaultCertificate": true,
+        "MinimumProtocolVersion": "SSLv3"
+    },
+    "CustomErrorResponses": {
+        "Quantity": 0
+    },
+    "Restrictions": {
+        "GeoRestriction": {
+            "RestrictionType": "none",
+            "Quantity": 0
+        }
+    },
+    "Aliases": {
+        "Items": [
+        	${ITEMS}
+        ],
+        "Quantity": $(echo ${ITEMS} | wc -w)
+    }
+}

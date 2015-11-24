@@ -11,20 +11,21 @@ pagespeed UseNativeFetcher on;
 pagespeed FetchHttps enable;
 pagespeed RateLimitBackgroundFetches off;
 
-pagespeed GlobalAdminPath /pagespeed_global_admin;
-pagespeed GlobalStatisticsPath /ngx_pagespeed_global_statistics;
+pagespeed GlobalAdminPath /pagespeed_admin;
 pagespeed DownstreamCacheRebeaconingKey "${SECRET_KEY}";
 pagespeed DownstreamCachePurgeLocationPrefix http://127.0.0.1:80;
 pagespeed EnableCachePurge on;
 pagespeed MessageBufferSize 100000;
 
 
+
 pagespeed MemcachedServers "${MEMCACHED_ADDR}:11211";
+pagespeed CreateSharedMemoryMetadataCache "/var/cache/pagespeed/" 256000;
 
 # map no cache responses from upstream to a minimal value
 map \$upstream_http_cache_control \$custom_cache_control {
-    "~(max-age=0|private|no-cache|no-store)"  "public, max-age=${UPSTREAM_MAX_AGE:-600}";
-    default       \$upstream_http_cache_control;
+	"~(max-age=0|private|no-cache|no-store)"  "max-age=${UPSTREAM_MAX_AGE:-${TTL:-120}}, public";
+	default	   \$upstream_http_cache_control;
 }
 
 map \$domain \$allowed_domain {
@@ -34,34 +35,33 @@ ${ALLOWED_DOMAINS}
 
 server {
 	listen 8080;
+	root /usr/share/nginx/html;
+	
 	
 	server_name ${SERVER_NAME} ${BACKEND} ${CDN} 127.0.0.1 localhost;
 
-	pagespeed on;
+	pagespeed ${PAGESPEED:-on};
 
 
-	pagespeed FileCachePath				"/var/cache/pagespeed";
+	pagespeed FileCachePath				"/var/cache/pagespeed/";
 	
 	# set cache size to one third the size of the available space
 	pagespeed FileCacheSizeKb			$((${DISK_PAGESPEED_MB} * 1024 / 3));
-	pagespeed FileCacheCleanIntervalMs	3600000;
-	pagespeed FileCacheInodeLimit		500000;
+	pagespeed FileCacheCleanIntervalMs	36000000;
+	pagespeed FileCacheInodeLimit		50000000;
 	
-	pagespeed LRUCacheKbPerProcess     8192;
-	pagespeed LRUCacheByteLimit        16384;
+	pagespeed LRUCacheKbPerProcess	 8192;
+	pagespeed LRUCacheByteLimit		16384;
 
 
 	# admin handlers
-	location ~ ^/pagespeed_admin {  }
+	location /pagespeed_admin { allow 127.0.0.1; deny all; }
 
 	pagespeed Statistics on;
 	pagespeed StatisticsLogging on;
 	pagespeed LogDir /var/log/pagespeed;
-	
 	pagespeed StatisticsLoggingIntervalMs 60000;
-	pagespeed StatisticsLoggingMaxFileSizeKb 102400;
-
-	pagespeed AdminPath /pagespeed_admin;
+	pagespeed StatisticsLoggingMaxFileSizeKb 1024000;
 	
 	# Ensure requests for pagespeed optimized resources go to the pagespeed handler
 	# and no extraneous headers get set.
@@ -71,27 +71,20 @@ server {
 	location ~ "^/pagespeed_static/" { }
 	location ~ "^/ngx_pagespeed_beacon$" { }
 
-#	pagespeed RewriteLevel PassThrough;
+	pagespeed RewriteLevel ${REWRITE_LEVEL:-CoreFilters};
 	
 	pagespeed PreserveUrlRelativity on;
 	pagespeed InPlaceResourceOptimization on;
 	
 	pagespeed DisableRewriteOnNoTransform off;
-	pagespeed UrlValuedAttribute img data-src image;
 	pagespeed DomainRewriteHyperlinks on;
 	pagespeed InlineResourcesWithoutExplicitAuthorization Script,Stylesheet;
 
 	
 	pagespeed EnableFilters rewrite_domains;
 	pagespeed EnableFilters extend_cache;
-	pagespeed EnableFilters move_css_to_head,move_css_above_scripts;
-	pagespeed EnableFilters prioritize_critical_css;
-	pagespeed EnableFilters rewrite_style_attributes_with_url;		
 	pagespeed EnableFilters collapse_whitespace;
 	pagespeed ServeRewrittenWebpUrlsToAnyAgent off;
-	
-	
-	
 	
 ${ENABLED_FILTERS}
 
@@ -105,7 +98,7 @@ ${CUSTOM_SETTINGS}
 
 	pagespeed Domain ${BACKEND};
 
-    pagespeed MapOriginDomain 127.0.0.1:8080 ${BACKEND};
+	pagespeed MapOriginDomain 127.0.0.1:8080 ${BACKEND};
 	pagespeed MapRewriteDomain ${FRONTEND} ${BACKEND};
 
 ${MAP_BACKENDS}
@@ -114,52 +107,63 @@ ${MAP_PROXY_DOMAINS}
 
 ${MAP_PROXY_HTTPS_DOMAINS}
 	
-	proxy_intercept_errors on;
-	error_page 301 302 307 =200 @redirect;
-	
+${SHARD_DOMAINS}
+
 	location @redirect {
 		set \$location \$upstream_http_location;
 		proxy_pass \$location;
-		proxy_set_header Referer  http://${BACKEND:-127.0.0.1:8080};
-		${PROXY_HIDE_BACKEND_HEADERS}
-	}
-	
-	location ~^/_proxy/plain/(?<domain>[^/]+)/ {
-		if (\$request_method !~ ^(GET|HEAD)) {return 444;}
-		rewrite ^/_proxy/plain/[^/]+/(.*) /\$1 break;
-		proxy_pass http://\$allowed_domain;
-		proxy_set_header Referer  http://${BACKEND:-127.0.0.1:8080};
-		${PROXY_HIDE_BACKEND_HEADERS}
+		proxy_set_header Referer  http://${BACKEND};
+		${HIDE_PROXY_HEADERS}
 	}
 
-	location ~^/_proxy/https/(?<domain>[^/]+)/ {
-		if (\$request_method !~ ^(GET|HEAD)) {return 444;}
-		rewrite ^/_proxy/https/[^/]+/(.*) /\$1 break;
-		proxy_pass https://\$allowed_domain;
-		proxy_set_header Referer  http://${BACKEND:-127.0.0.1:8080};
-		${PROXY_HIDE_BACKEND_HEADERS}
-	}
-			
-	location / {
-    	limit_except GET  {
-    		deny all;
-        }
-        proxy_pass http://${ORIGIN:-127.0.0.1:8080};
-		proxy_set_header Host ${BACKEND};
-		proxy_set_header Referer  http://${BACKEND:-127.0.0.1:8080};
-		proxy_redirect ~^/(.+)$ ${FRONTEND}/\$1;
-		${PROXY_HIDE_BACKEND_HEADERS}
+	location ~^/${RESIZE_PATH:_resize}/(?<width>[\d-]+)x(?<height>[\d-]+)/(?<domain>[^/]+)/(?<path>.*) {
+		rewrite ^/${RESIZE_PATH:_resize}/[\d-]+x[\d-]+/[^/]+/(.*) /\$1 break;
+		proxy_pass	http://\$allowed_domain;
+		proxy_set_header Accept-Encoding "";
+		image_filter				crop \$width \$height;
+		image_filter_jpeg_quality   90;
+		image_filter_buffer		 20M;
+		image_filter_interlace	  on;
 	}
 	
-	location /_warmly.txt {
+	location ~^/${PROXY_PATH:-_assets}/plain/(?<domain>[^/]+)/ {
+		if (\$request_method !~ ^(GET|HEAD)) {return 444;}
+		rewrite ^/${PROXY_PATH:-_assets}/plain/[^/]+/(.*) /\$1 break;
+		proxy_pass http://\$allowed_domain;
+		proxy_set_header Referer  http://${BACKEND};
+		proxy_intercept_errors on;
+		error_page 301 302 307 =200 @redirect;
+		${HIDE_PROXY_HEADERS}
+	}
+
+	location ~^/${PROXY_PATH:-_assets}/https/(?<domain>[^/]+)/ {
+		if (\$request_method !~ ^(GET|HEAD)) {return 444;}
+		rewrite ^/${PROXY_PATH:-_assets}/https/[^/]+/(.*) /\$1 break;
+		proxy_pass https://\$allowed_domain;
+		proxy_set_header Referer  http://${BACKEND};
+		proxy_ssl_server_name on;
+		proxy_intercept_errors on;
+		error_page 301 302 307 =200 @redirect;
+		${HIDE_PROXY_HEADERS}
+	}
+			
+	location @proxy {
+		proxy_pass http://${ORIGIN};
+		proxy_set_header Host ${BACKEND};
+		proxy_set_header Referer  http://${BACKEND};
+		proxy_redirect ~^/(.+)\$ ${FRONTEND}/\$1;
+		${HIDE_BACKEND_HEADERS}
+${NGINX_CUSTOM_OPTIONS}
+	}
+
+	location / {
+		try_files \$uri  @proxy;
+	}
+
+ 	location /_warmly.txt {
 		alias /var/log/nginx/warmly.log;
 	}
 	location /_wget.txt {
 		alias /var/log/nginx/wget.log;
 	}
-	location /_tests {
-		root /usr/share/nginx/html;
-	}
-	
-	${ROBOTS}	
 }

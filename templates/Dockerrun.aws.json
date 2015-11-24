@@ -1,0 +1,19 @@
+{
+   "AWSEBDockerrunVersion":"1",
+   "Image":{
+      "Name":"${DOCKER_IMAGE:-alessandrob/pagespeed}",
+      "Update":"true"
+   },
+   "Ports":[
+      {
+         "ContainerPort":"80"
+      }
+   ],
+   "Volumes": [
+    {
+      "HostDirectory": "/tmp",
+      "ContainerDirectory": "/host/tmp"
+    }
+    ],
+   "Logging":"/var/log/nginx"
+}

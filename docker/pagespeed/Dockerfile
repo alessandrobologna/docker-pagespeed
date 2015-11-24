@@ -43,6 +43,7 @@ RUN cd /tmp/libvmod-vsthrottle-1.0 \
     --with-debug --with-pcre-jit --with-ipv6 --with-http_ssl_module --with-http_stub_status_module --with-http_realip_module \
     --with-http_auth_request_module --with-http_addition_module --with-http_dav_module --with-http_geoip_module \
     --with-http_gzip_static_module --with-http_image_filter_module --with-http_spdy_module --with-http_sub_module \
+    --with-http_gunzip_module \
     --with-http_xslt_module --with-mail --with-mail_ssl_module \
     --with-threads \
     --add-module=/tmp/ngx_http_auth_pam_module-1.4 \
@@ -60,12 +61,11 @@ RUN cd /tmp/libvmod-vsthrottle-1.0 \
 RUN mkdir -p /var/lib/nginx
 RUN mkdir -p /var/lib/nginx/{body,fastcgi,proxy,scgi,uwsgi}
 
-VOLUME ["/etc/nginx/sites-enabled", "/var/cache/nginx","/var/cache/pagespeed","/var/log/nginx","/var/log/pagespeed","/var/cache/varnish"]
+VOLUME ["/etc/nginx/sites-enabled", "/var/cache/nginx","/var/cache/pagespeed","/var/log/nginx","/var/log/pagespeed","/var/cache/varnish","/host/tmp"]
 WORKDIR /etc/nginx/
 
 ADD nginx.conf /etc/nginx/nginx.conf
 ADD sites-enabled /etc/nginx/sites-enabled
-ADD robots.txt /usr/share/nginx/html/robots.txt
 EXPOSE 80
 
 # add template for varnish

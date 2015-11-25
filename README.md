@@ -31,14 +31,14 @@ $ make run myslowsite
 If it's the first time you are running this, it will take quite some time, because docker will need to download the base images, compile nginx, a varnish module and then finally start:
 
 [![asciicast](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d.png)](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d)
-#### first run on local
+(_first run on local_)
 
 Then open your browser and point to your local machine ip (try `open $(docker-machine ip devlocal)` if you don't know it).
 If everything goes as expected, you should see your site loading, with all the optimizations that you have configured.
 
 You can make further changes, and run again, this time it will take just a few seconds:
 [![asciicast](https://asciinema.org/a/2r58y1ocjycoxnbwvjw8f84px.png)](https://asciinema.org/a/2r58y1ocjycoxnbwvjw8f84px)
-#### second run, much quicker
+( _second run is much quicker_)
 
 
 ### On Elastic Beanstalk
@@ -62,7 +62,7 @@ and answer to the prompts to let Elastic Beanstalk build your application and en
 
 Also, you can watch this asciicast:
 [![asciicast](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo.png)](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo)
-#### init and deploy on Elastic Beanstalk
+(_init and deploy on Elastic Beanstalk_)
 
 After it's completed (it seems to take less than 10 minutes), you should have a site running at whatever URL you assigned to it. You can deploy your changes anytime, just using run 
 
@@ -70,13 +70,13 @@ After it's completed (it seems to take less than 10 minutes), you should have a 
 $ make deploy myslowsite
 ```
 [![asciicast](https://asciinema.org/a/8bfdnfsz7afij3wuv2ce5a40x.png)](https://asciinema.org/a/8bfdnfsz7afij3wuv2ce5a40x)
-
+(_deploy after init is much quicker_)
 ### Deployment of the CDN on CloudFront
 
 If you want to test integration with CloudFront as a downstream caching layer, you can just run `make cloudfront myslowsite` which will also locate the zone on Route53 and setup the DNS names (as CNAMES to the Elastic Beanstalk environment, and, if you have defined a CDN sharding, the corresponding CNAMES).
 
 [![asciicast](https://asciinema.org/a/ch4hl3enn9rhdanx5vp23opt2.png)](https://asciinema.org/a/ch4hl3enn9rhdanx5vp23opt2)
-
+(_set up route 53 and cloudfront_)
 
 
 
@@ -89,6 +89,7 @@ AWS_EB_ROOT_VOLUME_SIZE | 30 | On EB deployments, the size of the root volume (i
 AWS_EW_INSTANCE_TYPE | t2.large |  On EB deployments, the EC2 instance type that you intend to run. The default T2 is plenty for small sites and testing.
 BACKEND |  | This is the fully qualified hostname of the site that you want to accelerate. If the HTML pages contain references (as in src urls) to this domain, they will be rewritten with the value of FRONTEND. Also, see ORIGIN
 BACKENDS | | If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that PageSpeed can optimize. 
+CDN | | A list of domain names (such as cdn1.example.com, cdn2.example.com) that PageSpeed should be using for sharding assets
 COOKIES | |  If cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 
 FILTERS_ON | | A white space delimited list of PageSpeed settings that you want to activate for your site. 
 FILTERS_OFF | | A white space delimited list of PageSpeed settings that you want to de-activate for your site. 

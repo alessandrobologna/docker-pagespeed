@@ -17,40 +17,65 @@ Prerequisites:
 
 Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine, or check this asciicast:
 
-[![asciicast](https://asciinema.org/a/38q72m1cpxupcdng4h7klfmkc.png)](https://asciinema.org/a/38q72m1cpxupcdng4h7klfmkc)
+[![asciicast](https://asciinema.org/a/cprjy7v8xbhdv7hb76f30azji.png)](https://asciinema.org/a/cprjy7v8xbhdv7hb76f30azji)
+#### create machine
 
 Once you have created one, let's say it's called _pagespeed_, run `eval "$(docker-machine env pagespeed)"`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
 Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
 
-`make run myslowsite`
+```bash
+$ make run myslowsite
+```
 
 If it's the first time you are running this, it will take quite some time, because docker will need to download the base images, compile nginx, a varnish module and then finally start:
 
-[![asciicast](https://asciinema.org/a/9xqra2khlvrxap1crhk431w01.png)](https://asciinema.org/a/9xqra2khlvrxap1crhk431w01)
+[![asciicast](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d.png)](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d)
+#### first run on local
 
 Then open your browser and point to your local machine ip (try `open $(docker-machine ip devlocal)` if you don't know it).
-If everything goes as expected, you should see your site loading, with all the optimizations you have configured.
+If everything goes as expected, you should see your site loading, with all the optimizations that you have configured.
 
 You can make further changes, and run again, this time it will take just a few seconds:
-[![asciicast](https://asciinema.org/a/d3r596ztv4l6ylym28co3spkg.png)](https://asciinema.org/a/d3r596ztv4l6ylym28co3spkg)
+[![asciicast](https://asciinema.org/a/2r58y1ocjycoxnbwvjw8f84px.png)](https://asciinema.org/a/2r58y1ocjycoxnbwvjw8f84px)
+#### second run, much quicker
+
 
 ### On Elastic Beanstalk
 
-This assumes that you know how to [create an application](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.newapp.html) (use the latest docker based option). Once your application is created, you will need to [launch an enviroment] (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.environments.html) which will be used by your site.  The makefile will help you to create an environment for each site. Make sure your configuration for `myslowsite` is the configs/eb directory. Then run
-`make init myslowsite`
-and answer to the prompts to let Elastic Beanstalk know what environment you intend to use.
-Also, you can watch this asciicast:
-[![asciicast](https://asciinema.org/a/buetw5q0n15uc89p6g4plhkkh.png)](https://asciinema.org/a/buetw5q0n15uc89p6g4plhkkh)
+This assumes that you know how to [create an application](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.newapp.html) (use the latest docker based option). Once your application is created, you will need to [launch an enviroment] (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.environments.html) which will be used by your site.  The makefile will help you to create an environment for each site. 
 
-You can deploy anytime, just using run `make deploy myslowsite` and wait until it's done. You should have a site running at whatever URL you assigned to it.
-[![asciicast](https://asciinema.org/a/4yenmdqwk187j61ex5ykvczn8.png)](https://asciinema.org/a/4yenmdqwk187j61ex5ykvczn8)
+Make sure your configuration for `myslowsite` is the configs/eb directory.
+
+You can optionally set EB_OPTIONS with the options that you would want to pass to the `eb` command, for instance
+
+```bash
+$ export EB_OPTIONS="--region us-east-1 --profile ebuser"
+```
+Then run
+
+```bash
+$ make init myslowsite
+```
+
+and answer to the prompts to let Elastic Beanstalk build your application and environment.
+
+Also, you can watch this asciicast:
+[![asciicast](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo.png)](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo)
+#### init and deploy on Elastic Beanstalk
+
+After it's completed (it seems to take less than 10 minutes), you should have a site running at whatever URL you assigned to it. You can deploy your changes anytime, just using run 
+
+```bash 
+$ make deploy myslowsite
+```
+[![asciicast](https://asciinema.org/a/8bfdnfsz7afij3wuv2ce5a40x.png)](https://asciinema.org/a/8bfdnfsz7afij3wuv2ce5a40x)
 
 ### Deployment of the CDN on CloudFront
 
 If you want to test integration with CloudFront as a downstream caching layer, you can just run `make cloudfront myslowsite` which will also locate the zone on Route53 and setup the DNS names (as CNAMES to the Elastic Beanstalk environment, and, if you have defined a CDN sharding, the corresponding CNAMES).
-[![asciicast](https://asciinema.org/a/4zc9udjikuh02mnlumklulrok.png)](https://asciinema.org/a/4zc9udjikuh02mnlumklulrok)
 
+[![asciicast](https://asciinema.org/a/ch4hl3enn9rhdanx5vp23opt2.png)](https://asciinema.org/a/ch4hl3enn9rhdanx5vp23opt2)
 
 
 

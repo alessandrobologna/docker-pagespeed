@@ -1,7 +1,5 @@
-# Google PageSpeed on Docker, with Varnish on top
-
-
 ![Architecture diagram](art/diagram.jpg)
+# Google PageSpeed on Docker, with Varnish on top
 
 ## What is it?
 A docker build of [pagespeed](https://developers.google.com/speed/pagespeed/module/), [nginx](http://nginx.org/) and [varnish 4](https://www.varnish-cache.org/), with some convenient tooling to help developing environment configurations that can be deployed to Amazon Elastic Beanstalk

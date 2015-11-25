@@ -30,7 +30,7 @@ push: checkarg
 	@mkdir -p target/$(<F)/.ebextensions
 	@echo -e "option_settings:\n$$(cat $</config | cut -d '#' -f 1 | awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' | grep "=" | while IFS='=' read -r name value; do echo "  - option_name: $$name\n    value: $$value"; done)" > target/$(<F)/.ebextensions/app.config
 	@[ -d "$</files" ] && echo -e "files:\n  \"/tmp/files.b64\":\n    content: \"$$(tar -C "$</files"  -zcf - ./  | base64)\"" >> target/$(<F)/.ebextensions/app.config
-	@eval $$(bash scripts/environment ${ARGUMENT} eb) \
+	@eval $$(bash scripts/environment $(<F) eb) \
 	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' templates/Dockerrun.aws.json)\"")" > target/$(<F)/Dockerrun.aws.json 
 	@cd target/$(<F) && zip -r app.zip Dockerrun.aws.json .ebextensions 
 

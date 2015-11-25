@@ -80,30 +80,48 @@ If you want to test integration with CloudFront as a downstream caching layer, y
 
 
 
-## Environment variables
-  - BACKEND: This is the address of the origin servers (for instance, origin.myslowsite.com)
-  - BACKENDS: If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that pagespeed can handle more efficienlty by fetching resources from the origin. 
-  - SERVER_NAME: This is the plain hostname, so www.mysite.com.
-  - FRONTEND: This is the domain that you will use, facing the internet. Typically, www.mysite.com
-  - PROXY_DOMAINS: (Optional) This is a white space delimited list of domains that your site is fetching resources from. Third party JS, CSS, images. They all go there. The resources they are serving will be optimized and served from www.mysite.com/proxy/the.other.domain
-  - PROXY_HTTPS_DOMAINS: (Optional) Same as above, but for third party that want you to use their ssl servers.
-  - COOKIES: if cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 
-  - ALLOW_ROBOTS: (Optional) Don't set this variable if you are testing, it will by default send all crawlers somewhere else (because you are just testing and don't want that to be on google). If instead you want the serve the proper robots.txt from your origin, set this to "true" or "yes".
-  - FILTERS_ON: (Optional) A white space delimited list of settings (yes, they are actually pagespeed settings, not filters, don't ask) that you want to activate for your site. Note that a sane set of settings is already configured. You may want to check [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template) to see what's already enabled. For instance, "UseExperimentalJsMinifier"
-  - FILTERS_OFF: (Optional) Just the opposite of the above. Does one setting break your site? Does it slow it down? List it here (white spaces delimited list). For instance, "AvoidRenamingIntrospectiveJavascript".
-  - FILTERS_ENABLED: (Optional) The filters that you want, on top of what's already  [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template), in the usual white space delimited list. For instance "inline_preview_images resize_mobile_images"
-  - FILTERS_DISABLED: (Optional) The filters that you don't want to have running on your site out of those enabled by default [here](https://github.com/alessandrobologna/docker-pagespeed/blob/master/docker/pagespeed/sites-enabled/template)
-  - CUSTOM_SETTINGS: (Optional) As the name says, custom setting for Pagespeed that are not just "on" or off". For instance, "pagespeed MaxSegmentLength 250;". Note that in this case, you will need to respect the full syntax for pagespeed.
-  - MEMCACHED: (Optional) In a local configuration, this is not required, as a memcached daemon will be started automatically for you. If you are running this on AWS (or elsewhere), just list the address of the memcached servers.  The port number is assumed to be the standard one, so you don't need to specifiy it here.
-    MEMCACHED_SIZE: (Optional)
-    MAX_REQUESTS: (Optional)
-    HEALTCHECK: (Optional)
-    TTL: (Optional)
-    S_MAXAGE: (Optional)
-    GRACE: (Optional)
-    S_MAXAGE: (Optional)
-    DEBUG: (Optional)
-    IF_DESKTOP: (Optional)
-    IF_MOBILE: (Optional)
+## Environment variables reference
 
+NAME | DEFAULT VALUE | DESCRIPTION
+-----|---------------|------------
+AWS_EB_ROLE | aws-elasticbeanstalk-ec2-role | On EB deployments, the instance role assigned for each instance. The default value is what the AWS consoles creates automatically when you use the wizard to run your 'hello world' first app.
+AWS_EB_ROOT_VOLUME_SIZE | 30 | On EB deployments, the size of the root volume (in GB) for each instance.
+AWS_EW_INSTANCE_TYPE | t2.large |  On EB deployments, the EC2 instance type that you intend to run. The default T2 is plenty for small sites and testing.
+BACKEND |  | This is the fully qualified hostname of the site that you want to accelerate. If the HTML pages contain references (as in src urls) to this domain, they will be rewritten with the value of FRONTEND. Also, see ORIGIN
+BACKENDS | | If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that PageSpeed can optimize. 
+COOKIES | |  If cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 
+FILTERS_ON | | A white space delimited list of PageSpeed settings that you want to activate for your site. 
+FILTERS_OFF | | A white space delimited list of PageSpeed settings that you want to de-activate for your site. 
+FILTERS_ENABLED |  | A white space delimited list of filters to enable
+FILTERS_DISABLED | | A white space delimited list of filters to disable
+CUSTOM_SETTINGS | | Custom setting for PageSpeed that are not just "on" or off". For instance, "pagespeed MaxSegmentLength 250;". Note that in this case, you will need to respect the full syntax for PageSpeed.
+FRONTEND | SERVER_NAME | This is the domain that you will use, facing the internet. Typically, www.example.com. If not provided, it will fall back to SERVER_NAME
+GRACE | 3600 | A time period in seconds, for which PageSpeed will serve "graced" responses, i.e. responses that are expired, while a new response is fetched and cached in the background
+HEALTCHECK | / |  The path that will be used by both Varnish and Elastic Beanstalk to determine the health status. It needs to be returning a 2xx response code, so if "/" returns a 301, use the value of the Location header in the response instead (say, /home.html).
+HIDE_PROXY_HEADERS | | If set (to any value) will direct PageSpeed to ignore all the response headers related to caching from any proxied resource. Also see PROXY_DOMAINS
+HIDE_BACKEND_HEADERS | | If set (to any value) will direct PageSpeed to ignore all the response headers related to caching from ORIGIN or BACKEND
+IF_DESKTOP | | Direct PageSpeed to optionally send additional headers to ORIGIN or BACKEND if the request is detected as coming from a desktop browser. For instance a value could be "Cookie: DeviceType=desktop"
+IF_MOBILE | | Same as IF_DESKTOP, but for mobile devices. The detection is done in VCL, and also supports CloudFront device detection headers
+MAXAGE | 120 | Sets the max-age Cache-Control header for requests that have been deemed to have already been optimized enough to be cached on downstream caches (such a CloudFront) 
+MAX_DOWNSTREAM_AGE | the BACKEND response max-age, or TTL | For requests that are deemed to be already fully optimized, sets a max-age for downstream caches
+MAX_REQUESTS | 256 | Maximum number of requests that are accepted from the same client (using X-Forwarded resolution)
+MEMCACHED | | Optionally provide the ip address of a Memcached server listening on port 11211 (for instance an Elastic Cache server. If provided, a rule will be added to the security group for Elastic Cache to allow connections from your Elastic Beanstalk environment. 
+MINAGE | 60 | The treshold time in seconds after wich a response will be deemed to be already sufficiently optimized to be cached on downstream servers
+NGINX_CUSTOM_OPTIONS | | If provided, adds custom commands to the nginx location that serves responses from the BACKEND. It can be used to, for instance, use the substitution module to inject code in the page
+ORIGIN | | If provided, will direct PageSpeed to send requests to it instead of BACKEND, and set the Host: header to the value of BACKEND. If your external domain name is www.example.com, but your origin is origin.example.com, you will set BACKEND to www.example.com and ORIGIN to origin.backend.com
+PROXY_DOMAINS | | This is a white space delimited list of domains that your site is fetching resources from. Third party JS, CSS, images. They all go there. The resources they are serving will be optimized and served from www.mysite.com/_assets/the.other.domain
+PROXY_HTTPS_DOMAINS | | Same as PROXY_DOMAINS, but for resources that can be served only on https.
+PAGESPEED | on | Can be used to optionally turn PageSpeed completely off, therefore acting as a simple reverse proxy
+PROXY_PATH | _assets | When resources in PROXY_DOMAINS or HTTPS_PROXY_DOMAINS are rewritten in the FRONTEND uri space, their url is constructed as _assets/plain/domain/path to avoid clashes within the uri space. If /_assets/ is already used by your site, the value can be changed to avoid conflicts
+RESIZE_PATH | _resize | Allows on the flight resizing of images (jpg only). The image must resized in one of the authorized domains, and the resized url would for instance _resize/[width]x[height]/www.example.com/images/big.jpg. [width] and [height] are expressed in pixels and can be set to - if the resize should not constrain that dimension. Since the result image will also be optmized by PageSpeed, conversion to webp and quality can be set with PageSpeed options  
+REWRITE_LEVEL| CoreFilters | Set the PageSpeed [rewrite level](https://developers.google.com/speed/pagespeed/module/config_filters) 
+SERVER_NAME | | The fully qualified hostname where you are running PageSpeed. It can be your local docker-machine ip address, the elastic beanstalk server, or any other name that you have assigned to it.
+TTL | 120 | The time period, in seconds, for which PageSpeed will keep cached responses in Varnish cache
+MAX_UPSTREAM_AGE | 120 | If HIDE_PROXY_HEADERS or HIDE_BACKEND_HEADERS are set, and the response is not allowing caching (for instance, with max-age=0), force PageSpeed to instead consider the response cacheable for this amount of time.
+VARNISH_UNSET_RESPONSE_HEADERS | | A list of header names in the response that you don't want to send back
+WARMER_URL | | If provided, will start a cache warming script recursively crawling pages at the given URL (typically the home page).  
+WARMLY_LIMIT | 1 | The number of levels of recursion for the cache warming script
+WARMLY_REJECT | txt,xml,json,rss,atom,jpg,jpeg,gif,png,mp4,js,css | File extensions that should not be crawled
+WARMLY_WAIT_NEXT_RUN | 900 | Number of seconds between a crawl run and the next
+WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS | 0.5 | Number of seconds between an http request and the next for each crawl
 

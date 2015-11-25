@@ -254,7 +254,7 @@ sub vcl_deliver {
             set resp.http.Cache-Control="public, max-age=" + (${MAXAGE:-120} - std.integer(resp.http.Age,0));
           } else {
             // this response has been in cache for a while, downstream can keep it for much longer (up to the source TTL)
-            set resp.http.Cache-Control="public, max-age=" + ${MAX_DOWNSTREAM_AGE:-(std.integer(regsub(resp.http.X-Page-Speed-TTL,"([0-9]+)(\.([0-9]+))?","\1"),${MAXAGE:-60}) - std.integer(resp.http.Age,0))};
+            set resp.http.Cache-Control="public, max-age=" + ${MAX_DOWNSTREAM_AGE:-(std.integer(regsub(resp.http.X-Page-Speed-TTL,"([0-9]+)(\.([0-9]+))?","\1"),${MAXAGE:-120}) - std.integer(resp.http.Age,0))};
           }
         } else {
           set resp.http.Cache-Control="no-cache, max-age=0";

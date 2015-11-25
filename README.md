@@ -16,8 +16,8 @@ Prerequisites:
 
 Please see the [documentation](https://docs.docker.com/machine/get-started/) on the Docker site on how to create a local development machine, or check this asciicast:
 
-[![asciicast](https://asciinema.org/a/cprjy7v8xbhdv7hb76f30azji.png)](https://asciinema.org/a/cprjy7v8xbhdv7hb76f30azji)
-#### create machine
+[![asciicast](https://asciinema.org/a/8qo8fi82pvenahi93dwhsn9kl.png)](https://asciinema.org/a/8qo8fi82pvenahi93dwhsn9kl)
+(_create local docker-machine_)
 
 Once you have created one, let's say it's called _pagespeed_, run `eval "$(docker-machine env pagespeed)"`. This will configure you terminal session to point to the docker daemon running on your local machine.
 

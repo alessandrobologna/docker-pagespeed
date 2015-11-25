@@ -121,7 +121,7 @@ MAX_UPSTREAM_AGE | 120 | If HIDE_PROXY_HEADERS or HIDE_BACKEND_HEADERS are set, 
 VARNISH_UNSET_RESPONSE_HEADERS | | A list of header names in the response that you don't want to send back
 WARMER_URL | | If provided, will start a cache warming script recursively crawling pages at the given URL (typically the home page).  
 WARMLY_LIMIT | 1 | The number of levels of recursion for the cache warming script
-WARMLY_REJECT | txt,xml,json,rss,atom,jpg,jpeg,gif,png,mp4,js,css | File extensions that should not be crawled
+WARMLY_REJECT | txt, xml, json, rss, atom, jpg, jpeg ,gif, png, mp4, js, css | File extensions that should not be crawled
 WARMLY_WAIT_NEXT_RUN | 900 | Number of seconds between a crawl run and the next
 WARMLY_WAIT_SECONDS_BETWEEN_REQUESTS | 0.5 | Number of seconds between an http request and the next for each crawl
 

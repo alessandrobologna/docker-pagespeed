@@ -1,4 +1,4 @@
-# docker-pagespeed
+# Google PageSpeed on Docker, with Varnish on top
 
 ![Architecture diagram](art/diagram.jpg)
 

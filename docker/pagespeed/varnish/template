@@ -149,8 +149,11 @@ sub vcl_recv {
   # call generate_user_agent_based_key;
   call ps_capabilities;
   
-  # unset the user agent, as PageSpeed will still try to use if it's available
-  unset req.http.User-Agent;
+  # this is working only for cloudfront for now. 
+  if (req.http.X-UA ~ "cloudfront") {
+    // unset the user agent, as PageSpeed will still try to use if it's available
+ 	unset req.http.User-Agent;
+  }
   
   if (req.http.Cookie) {
     set req.http.Cookie = ";" + req.http.Cookie;

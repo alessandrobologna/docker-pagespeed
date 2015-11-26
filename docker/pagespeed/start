@@ -100,14 +100,12 @@ SECRET_KEY=$(dd if=/dev/urandom bs=256 count=1 2>/dev/null | env LC_CTYPE=C tr -
 
 SET_HEADER_MOBILE=$(if [ -n "${IF_MOBILE}" ]
 then
-	IFS=':; ' read -a split <<< "${IF_MOBILE}"
-	echo "unset req.http.${split[0]}; set req.http.${split[0]}=\"${split[1]}\";"
+	awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}' <<< ${IF_MOBILE}
 fi)
 
 SET_HEADER_DESKTOP=$(if [ -n "${IF_DESKTOP}" ]
 then
-	IFS=':; ' read -a split <<< "${IF_DESKTOP}"
-	echo "unset req.http.${split[0]}; set req.http.${split[0]}=\"${split[1]}\";"
+	awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}' <<< ${IF_DESKTOP}
 fi)
 
 DEBUG_HEADERS=$([ -n "${DEBUG}" ] && echo "set req.http.X-Page-Speed-Debug=\"Yes\";")

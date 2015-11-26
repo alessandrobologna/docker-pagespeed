@@ -10,7 +10,7 @@ ALIASES="${FRONTEND} ${CDN}"
 
 SEP=""
 ITEMS=$(
-for alias in ${ALIASES}
+for alias in ${ALIASES} ${BACKEND} 
 	do echo -n "$SEP\"$alias\" "
 	SEP=","
 done)

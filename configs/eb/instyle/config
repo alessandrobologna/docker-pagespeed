@@ -19,7 +19,9 @@ CUSTOM_SETTINGS=" \
 	pagespeed ImageRecompressionQuality 50; \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
-MAXAGE="300"
+MAX_AGE="300"
 CORS="http://instyle.lightweb.io"
 HIDE_PROXY_HEADERS="true"
 HIDE_BACKEND_HEADERS="true"
+IF_DESKTOP="Cookie: TI_PREFS=default;"
+IF_MOBILE="Cookie: TI_PREFS=phone;"

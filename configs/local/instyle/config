@@ -16,8 +16,10 @@ CUSTOM_SETTINGS=" \
 	pagespeed UrlValuedAttribute img data-src image; \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
-MAXAGE="300"
+MAX_AGE="300"
 CORS="*"
 HIDE_PROXY_HEADERS="true"
 HIDE_BACKEND_HEADERS="true"
 DEBUG="yes"
+IF_DESKTOP="Cookie: TI_PREFS=default;"
+IF_MOBILE="Cookie: TI_PREFS=phone;"

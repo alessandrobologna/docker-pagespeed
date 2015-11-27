@@ -14,6 +14,6 @@ FILTERS_ON="UseExperimentalJsMinifier"
 CUSTOM_SETTINGS=" \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
-MAXAGE="300"
+MAX_AGE="300"
 HIDE_PROXY_HEADERS="true"
 DEBUG="yes"

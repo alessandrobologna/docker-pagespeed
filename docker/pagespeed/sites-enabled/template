@@ -24,7 +24,7 @@ pagespeed CreateSharedMemoryMetadataCache "/var/cache/pagespeed/" 256000;
 
 # map no cache responses from upstream to a minimal value
 map \$upstream_http_cache_control \$custom_cache_control {
-	"~(max-age=0|private|no-cache|no-store)"  "max-age=${MAX_UPSTREAM_AGE:-${TTL:-120}}, public";
+	"~(max-age=0|private|no-cache|no-store)"  "max-age=${MIN_TTL:-120}, public";
 	default	   \$upstream_http_cache_control;
 }
 

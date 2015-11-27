@@ -23,7 +23,7 @@ CUSTOM_SETTINGS=" \
 	pagespeed UrlValuedAttribute img data-highres500-src image; \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
-MAXAGE="300"
+MAX_AGE="300"
 CORS="http://www.allyou.com"
 WARMER_URL="http://www.allyou.com/"
 HIDE_PROXY_HEADERS="true"

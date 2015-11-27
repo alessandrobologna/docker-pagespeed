@@ -20,7 +20,7 @@ CUSTOM_SETTINGS=" \
 	pagespeed UrlValuedAttribute img data-src image; \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
-MAXAGE="300"
+MAX_AGE="300"
 HIDE_PROXY_HEADERS="true"
 HIDE_BACKEND_HEADERS="true"
 HEALTCHECK="/people/stylewatch"

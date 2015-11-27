@@ -2,8 +2,8 @@ BACKEND="www.nytimes.com"
 PROXY_DOMAINS="a1.nyt.com static01.nyt.com et img5.timeinc.net tiads.timeinc.net fonts.timeinc.net \
 	www5.timeinc.net subscription-assets.timeinc.com js.revsci.net pq-direct.revsci.net \
 	speed.pointroll.com www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com sportsillustrated.ep.livefyre.com apis.google.com ui.bamstatic.com tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com cdn.api.onebot.timeinc.com"
-SERVER_NAME="vespa.localhost"
-CDN="cdn.vespa.localhost"
+SERVER_NAME="pagespeed.localhost"
+CDN="cdn.pagespeed.localhost"
 EB_DOMAIN="nytimes-ab.elasticbeanstalk.com"
 MEMCACHED="memcached-pagespeed.qblvmc.cfg.usw2.cache.amazonaws.com"
 FILTERS_ENABLED="prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \

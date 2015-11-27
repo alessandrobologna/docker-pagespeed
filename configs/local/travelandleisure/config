@@ -7,8 +7,8 @@ PROXY_DOMAINS="\
 	www.googletagservices.com www.googleadservices.com asset.pagefair.com platform.twitter.com apis.google.com ui.bamstatic.com \
 	tags.tiqcdn.com cdn.optimizely.com widgets.outbrain.com a.postrelease.com\
 	cdn.api.onebot.timeinc.com cdn.media.content.onebot.timeinc.com cdn.tinypass.com"
-SERVER_NAME="vespa.localhost"
-CDN="cdn.vespa.localhost"
+SERVER_NAME="pagespeed.localhost"
+CDN="cdn.pagespeed.localhost"
 FILTERS_ENABLED="defer_javascript prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
 	convert_to_webp_lossless resize_rendered_image_dimensions \
 	rewrite_style_attributes inline_google_font_css"
@@ -19,7 +19,7 @@ CUSTOM_SETTINGS=" \
 	pagespeed MaxCombinedJsBytes 10000000; \
 	pagespeed ImplicitCacheTtlMs 3600000;"
 MAX_AGE="300"
-CORS="http://vespa.localhost"
+CORS="http://pagespeed.localhost"
 HIDE_PROXY_HEADERS="true"
 HIDE_BACKEND_HEADERS="true"
 NGINX_CUSTOM_OPTIONS="\

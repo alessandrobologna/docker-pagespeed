@@ -24,7 +24,14 @@ $ docker-machine create pagespeed --driver virtualbox
 ```
 Once you have created one, let's say it's called _pagespeed_, run `eval "$(docker-machine env pagespeed)"`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
-Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
+Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. 
+Please note that pagespeed.localhost and cdn.pagespeed.localhost are entries in you local `/etc/hosts` file pointing to your machine that you can either change to something else, or create by running something like:
+
+```bash
+echo -e "$(docker-machine ip pagespeed)\t pagespeed.localhost cdn.pagespeed.localhost" | sudo tee -a /etc/hosts
+```
+
+If your configuration is called `myslowsite` then just run:
 
 ```bash
 $ make run myslowsite

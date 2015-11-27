@@ -7,8 +7,8 @@ PROXY_DOMAINS=" \
 	fonts.timeinc.net tiads.allyou.com img5.timeinc.net \
 	js.revsci.net pagead2.googlesyndication.com \
 	tags.tiqcdn.com c.betrad.com s.skimresources.com wms.assoc-amazon.com www.googleadservices.com widgets.outbrain.com"
-SERVER_NAME="vespa.localhost"
-CDN="cdn.vespa.localhost"
+SERVER_NAME="pagespeed.localhost"
+CDN="cdn.pagespeed.localhost"
 FILTERS_ENABLED="defer_javascript prioritize_critical_css inline_preview_images resize_mobile_images lazyload_images convert_jpeg_to_webp \
 	convert_to_webp_lossless insert_image_dimensions resize_rendered_image_dimensions \
 	rewrite_style_attributes inline_google_font_css"

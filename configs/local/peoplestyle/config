@@ -7,8 +7,8 @@ PROXY_DOMAINS=" \
 	js.revsci.net pagead2.googlesyndication.com \
 	tags.tiqcdn.com c.betrad.com s.skimresources.com wms.assoc-amazon.com www.googleadservices.com widgets.outbrain.com cdn.api.onebot.timeinc.com"
 PROXY_HTTPS_DOMAINS="secure-fonts.timeinc.net"
-SERVER_NAME="vespa.localhost"
-CDN="cdn.vespa.localhost"
+SERVER_NAME="pagespeed.localhost"
+CDN="cdn.pagespeed.localhost"
 FILTERS_ENABLED="defer_javascript prioritize_critical_css convert_jpeg_to_webp \
 	convert_to_webp_lossless \
 	rewrite_style_attributes inline_google_font_css"

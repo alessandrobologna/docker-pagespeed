@@ -102,8 +102,9 @@ HIDE_PROXY_HEADERS | | If set (to any value) will direct PageSpeed to ignore all
 HIDE_BACKEND_HEADERS | | If set (to any value) will direct PageSpeed to ignore all the response headers related to caching from ORIGIN or BACKEND
 IF_DESKTOP | | Direct PageSpeed to optionally send additional headers to ORIGIN or BACKEND if the request is detected as coming from a desktop browser. For instance a value could be "Cookie: DeviceType=desktop"
 IF_MOBILE | | Same as IF_DESKTOP, but for mobile devices. The detection is done in VCL, and also supports CloudFront device detection headers
-MAXAGE | 120 | Sets the max-age Cache-Control header for requests that have been deemed to have already been optimized enough to be cached on downstream caches (such a CloudFront) 
-MAX_DOWNSTREAM_AGE | the BACKEND response max-age, or TTL | For requests that are deemed to be already fully optimized, sets a max-age for downstream caches
+MAX_AGE | 120 | Sets the max-age Cache-Control header for requests that have been deemed to have already been optimized enough to be cached on downstream caches (such a CloudFront) 
+MAX_TTL | 180 | HTML responses are cached in varnish for the value of TTL, or the value of backend max-age response if greater than 0. In some cases, that value may be too high and make so that a partially optimized response is kept in cache too long. Setting a MAXTTL allows to override the value sent by the backend
+MAX_DOWNSTREAM_AGE | the backend response max-age, or the current TTL | For requests that are deemed to be already fully optimized, sets a max-age for downstream caches
 MAX_REQUESTS | 256 | Maximum number of requests that are accepted from the same client (using X-Forwarded resolution)
 MEMCACHED | | Optionally provide the ip address of a Memcached server listening on port 11211 (for instance an Elastic Cache server. If provided, a rule will be added to the security group for Elastic Cache to allow connections from your Elastic Beanstalk environment. 
 MINAGE | 60 | The treshold time in seconds after wich a response will be deemed to be already sufficiently optimized to be cached on downstream servers
@@ -116,8 +117,7 @@ PROXY_PATH | _assets | When resources in PROXY_DOMAINS or HTTPS_PROXY_DOMAINS ar
 RESIZE_PATH | _resize | Allows on the flight resizing of images (jpg only). The image must resized in one of the authorized domains, and the resized url would for instance _resize/[width]x[height]/www.example.com/images/big.jpg. [width] and [height] are expressed in pixels and can be set to - if the resize should not constrain that dimension. Since the result image will also be optmized by PageSpeed, conversion to webp and quality can be set with PageSpeed options  
 REWRITE_LEVEL| CoreFilters | Set the PageSpeed [rewrite level](https://developers.google.com/speed/pagespeed/module/config_filters) 
 SERVER_NAME | | The fully qualified hostname where you are running PageSpeed. It can be your local docker-machine ip address, the elastic beanstalk server, or any other name that you have assigned to it.
-TTL | 120 | The time period, in seconds, for which PageSpeed will keep cached responses in Varnish cache
-MAX_UPSTREAM_AGE | 120 | If HIDE_PROXY_HEADERS or HIDE_BACKEND_HEADERS are set, and the response is not allowing caching (for instance, with max-age=0), force PageSpeed to instead consider the response cacheable for this amount of time.
+MIN_TTL | 120 | The time period, in seconds, for which PageSpeed will keep cached responses in Varnish cache
 VARNISH_UNSET_RESPONSE_HEADERS | | A list of header names in the response that you don't want to send back
 WARMER_URL | | If provided, will start a cache warming script recursively crawling pages at the given URL (typically the home page).  
 WARMLY_LIMIT | 1 | The number of levels of recursion for the cache warming script

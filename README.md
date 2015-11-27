@@ -19,12 +19,20 @@ Please see the [documentation](https://docs.docker.com/machine/get-started/) on 
 [![asciicast](https://asciinema.org/a/8qo8fi82pvenahi93dwhsn9kl.png)](https://asciinema.org/a/8qo8fi82pvenahi93dwhsn9kl)
 (_create local docker-machine_)
 
+```bash
+$ docker-machine create pagespeed --driver virtualbox
+```
 Once you have created one, let's say it's called _pagespeed_, run `eval "$(docker-machine env pagespeed)"`. This will configure you terminal session to point to the docker daemon running on your local machine.
 
 Then, you need to have a configuration created in the `configs/local` directory. There are a lof of examples in [here](configs/local), so just take one and rename/change it for your needs. If your configuration is called `myslowsite` then just run:
 
 ```bash
 $ make run myslowsite
+```
+
+_Note:_ There have been a couple of reports that sometimes machines are not being created with an attached disk, resulting in the `make run` step failing due to a lack of diskspacee, if you have this problem, try re-creating the machine or checking beforehand if the machine has been properly setup, eg:
+```bash
+$ docker-machine ssh pagespeed 'df -h' # you should see an sda1 for aufs mointpoint.
 ```
 
 If it's the first time you are running this, it will take quite some time, because docker will need to download the base images, compile nginx, a varnish module and then finally start:

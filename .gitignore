@@ -4,3 +4,4 @@ logs/*.log
 .project
 configs/saved/*
 .config.env
+/docker-compose.yml

@@ -4,6 +4,7 @@
 #
 resolver 8.8.8.8;
 aio threads;
+map_hash_bucket_size 256;
 
 pagespeed ForceCaching on;
 pagespeed FetchWithGzip on;
@@ -27,6 +28,8 @@ map \$upstream_http_cache_control \$custom_cache_control {
 	"~(max-age=0|private|no-cache|no-store)"  "max-age=${MIN_TTL:-120}, public";
 	default	   \$upstream_http_cache_control;
 }
+
+	
 
 map \$domain \$allowed_domain {
 ${ALLOWED_DOMAINS}
@@ -109,11 +112,22 @@ ${MAP_PROXY_HTTPS_DOMAINS}
 	
 ${SHARD_DOMAINS}
 
+	# used to follow redirects, it's enabled for all the assets paths
 	location @redirect {
 		set \$location \$upstream_http_location;
 		proxy_pass \$location;
 		proxy_set_header Referer  http://${BACKEND};
 		${HIDE_PROXY_HEADERS}
+	}
+
+	# reverse proxy to backend	
+	location @proxy {
+		proxy_pass http://${ORIGIN};
+		proxy_set_header Host ${BACKEND};
+		proxy_set_header Referer  http://${BACKEND};
+		proxy_redirect ~^/(.+)\$ ${FRONTEND}/\$1;
+		${HIDE_BACKEND_HEADERS}
+		${NGINX_CUSTOM_OPTIONS}
 	}
 
 	location ~^/${RESIZE_PATH:_resize}/(?<width>[\d-]+)x(?<height>[\d-]+)/(?<domain>[^/]+)/(?<path>.*) {
@@ -146,15 +160,18 @@ ${SHARD_DOMAINS}
 		error_page 301 302 307 =200 @redirect;
 		${HIDE_PROXY_HEADERS}
 	}
-			
-	location @proxy {
+	
+	location ~(${FOLLOW_REDIRECTS:-^/not/a/valid/path,hopefully}) {
 		proxy_pass http://${ORIGIN};
 		proxy_set_header Host ${BACKEND};
 		proxy_set_header Referer  http://${BACKEND};
+		proxy_intercept_errors on;
+		error_page 301 302 307 =200 @redirect;
 		proxy_redirect ~^/(.+)\$ ${FRONTEND}/\$1;
 		${HIDE_BACKEND_HEADERS}
-${NGINX_CUSTOM_OPTIONS}
-	}
+	}	
+	
+	
 
 	location / {
 		try_files \$uri  @proxy;

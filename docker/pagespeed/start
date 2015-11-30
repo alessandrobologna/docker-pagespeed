@@ -144,18 +144,24 @@ then
 	/cache-warmer ${WARMER_URL} > /var/log/nginx/warmly.log &
 fi
 
-# optionally copy the EXTRA dir in  /usr/share/nginx/html
-if [ -n "${FILES}" ]
-then
-	rm -rf /usr/share/nginx/html/*
-	echo $FILES | base64 -d | tar -C /usr/share/nginx/html -zxf - 
-elif [ -f /host/tmp/files.b64 ]
-then
-	rm -rf /usr/share/nginx/html/*
-	cat /host/tmp/files.b64 | base64 -d | tar -C /usr/share/nginx/html -zxf - 
-fi
+# clean up the docroot
+rm -rf /usr/share/nginx/html/*
+
+# optionally copy the files /usr/share/nginx/html
+[ -n "${FILES}" ] && echo $FILES | base64 -d | tar -C /usr/share/nginx/html -zxf - 
+[ -n "${SHARED}" ] && echo $SHARED | base64 -d | tar -C /usr/share/nginx/html -zxf - 
+[ -f /host/tmp/shared.tgz ] && tar -C /usr/share/nginx/html -zxf /host/tmp/shared.tgz 
+[ -f /host/tmp/files.tgz ] && tar -C /usr/share/nginx/html -zxf /host/tmp/files.tgz 
+
 
 # start nginx
 echo "starting nginx with cache size $((${DISK_PAGESPEED_MB} / 3))M"
 
-exec /usr/sbin/nginx $@
+if [ "$1" = 'nginx' ]
+then
+	shift
+	exec /usr/sbin/nginx "$@"
+else
+	exec "$@"
+fi
+	

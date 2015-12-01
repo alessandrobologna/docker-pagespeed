@@ -2,9 +2,10 @@
 TMPOUT=$(cat configs/${2}/${1}/config | cut -d '#' -f 1 |  awk '{if (sub(/\\$/,"")) printf "%s", $0; else print $0}' \
 	  | grep "=")
 FILES=$([ -d  configs/${2}/${1}/files ] && echo -e "FILES=\"$(tar -C configs/${2}/${1}/files -zcf - ./ | base64)\"") 
+COMMON=$([ -d  configs/shared/${2}/files ] && echo -e "SHARED=\"$(tar -C configs/shared/${2}/files -zcf - ./ | base64)\"") 
 SHARED=$([ -d  configs/shared/files ] && echo -e "SHARED=\"$(tar -C configs/shared/files -zcf - ./ | base64)\"") 
-echo -e "$TMPOUT\n$FILES\n$SHARED" | sed "s/^/export /g"	  
-echo -e "$TMPOUT\n$FILES\n$SHARED" | sed -E 's/([^\\])\"/\1/g' | sed -E 's/ \+/ /g'	> configs/${2}/${1}/.config.env
+echo -e "$TMPOUT\n$FILES\n$COMMON\n$SHARED" | sed "s/^/export /g"	  
+echo -e "$TMPOUT\n$FILES\n$COMMON\n$SHARED" | sed -E 's/([^\\])\"/\1/g' | sed -E 's/ \+/ /g'	> configs/${2}/${1}/.config.env
 	  
 	  
 	    

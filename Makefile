@@ -29,8 +29,9 @@ push: checkarg
 	@rm -f target/$(<F)/*.zip 
 	@mkdir -p target/$(<F)/.ebextensions
 	@echo -e "option_settings:\n$$(cat $</config | cut -d '#' -f 1 | awk '{if (sub(/\\$$/,"")) printf "%s", $$0; else print $$0}' | grep "=" | while IFS='=' read -r name value; do echo "  - option_name: $$name\n    value: $$value"; done)" > target/$(<F)/.ebextensions/app.config
-	@[ -d "$</files" ] && tar -zcf target/$(<F)/.ebextensions/files.tgz -C "$</files" ./ 
-	@[ -d "configs/shared/files" ] && tar -zcf target/$(<F)/.ebextensions/shared.tgz -C "configs/shared/files" ./ 
+	@[ -d "configs/shared/files" ] && tar -zcf target/$(<F)/.ebextensions/shared.tgz -C "configs/shared/files" ./ || true
+	@[ -d "configs/shared/$(<F)/files" ] && tar -zcf target/$(<F)/.ebextensions/shared.tgz -C "configs/shared/files" ./ || true
+	@[ -d "$</files" ] && tar -zcf target/$(<F)/.ebextensions/files.tgz -C "$</files" ./ || true
 	@echo -e "container_commands:\n  copy:\n    command: cp .ebextensions/*.tgz /tmp/"  >> target/$(<F)/.ebextensions/app.config
 	@eval $$(bash scripts/environment $(<F) eb) \
 	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' templates/Dockerrun.aws.json)\"")" > target/$(<F)/Dockerrun.aws.json 

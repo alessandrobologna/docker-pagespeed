@@ -148,9 +148,11 @@ fi
 rm -rf /usr/share/nginx/html/*
 
 # optionally copy the files /usr/share/nginx/html
-[ -n "${FILES}" ] && echo $FILES | base64 -d | tar -C /usr/share/nginx/html -zxf - 
 [ -n "${SHARED}" ] && echo $SHARED | base64 -d | tar -C /usr/share/nginx/html -zxf - 
+[ -n "${COMMON}" ] && echo $COMMON | base64 -d | tar -C /usr/share/nginx/html -zxf - 
+[ -n "${FILES}" ] && echo $FILES | base64 -d | tar -C /usr/share/nginx/html -zxf - 
 [ -f /host/tmp/shared.tgz ] && tar -C /usr/share/nginx/html -zxf /host/tmp/shared.tgz 
+[ -f /host/tmp/common.tgz ] && tar -C /usr/share/nginx/html -zxf /host/tmp/common.tgz 
 [ -f /host/tmp/files.tgz ] && tar -C /usr/share/nginx/html -zxf /host/tmp/files.tgz 
 
 

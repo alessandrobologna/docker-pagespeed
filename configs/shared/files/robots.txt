@@ -1,0 +1,3 @@
+# by default, disallow crawling any site
+User-agent: *
+Disallow: /

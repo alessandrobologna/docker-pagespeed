@@ -5,7 +5,7 @@
 A docker build of [pagespeed](https://developers.google.com/speed/pagespeed/module/), [nginx](http://nginx.org/) and [varnish 4](https://www.varnish-cache.org/), with some convenient tooling to help developing environment configurations that can be deployed to Amazon Elastic Beanstalk
 
 ## Features
-This PageSpeed based appliance is a non-intrusive, self contained, auto scaling optimization and caching layer for any site. On top of what you can already implement with PageSpeed, this appliance provide:
+This PageSpeed based appliance is a _non-intrusive, self-contained, auto-scaling_ optimization and caching layer for any website. On top of what you can already implement with PageSpeed, this appliance provide:
 
 - Simpler configuration, define a few required environment variable in a file and nginx and varnish will be automatically configured to handle your site with the best practices for performance improvement
 - Fast deployment both in a [local Docker environment](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d) and on [AWS Elastic] Beanstalk((https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo))

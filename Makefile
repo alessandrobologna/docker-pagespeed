@@ -14,7 +14,7 @@ run: checkarg
 
 scale: checkarg 
 	@echo "Scaling pagespeed to ${ARGUMENT} containers"
-	@docker-compose scale pagespeed=${ARGUMENT} && docker-compose logs
+	@docker-compose scale pagespeed=${ARGUMENT} && docker-compose up -d  --force-recreate --no-deps nginx && docker-compose logs
 	
 push: checkarg
 	@echo "Building and pushing images to docker hub ${ARGUMENT} repository"

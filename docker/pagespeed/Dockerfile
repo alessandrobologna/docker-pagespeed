@@ -75,6 +75,6 @@ ADD varnish/useragent-key.vcl /etc/varnish/
 ADD cache-warmer /cache-warmer
 ADD start /start
 RUN chmod +x /start /cache-warmer
-ENTRYPOINT ["/start"]
 CMD ["nginx"]
+ENTRYPOINT ["/start"]
 

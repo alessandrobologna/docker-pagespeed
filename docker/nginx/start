@@ -1,0 +1,13 @@
+#!/bin/bash 
+# determine the backends
+backends=$(cat /etc/hosts | awk '{print $2}' | grep ^pagespeed_ | awk '{printf  "server %s:80; ",$1}')
+echo "upstream pagespeed {$backends}" > /etc/nginx/upstream.conf
+if [ "$1" = 'nginx' ]
+then
+	shift
+	exec /usr/sbin/nginx "$@"
+else
+	exec "$@"
+fi
+
+

@@ -10,7 +10,7 @@ A docker build of [pagespeed](https://developers.google.com/speed/pagespeed/modu
 This PageSpeed based appliance is a _non-intrusive, self-contained, auto-scaling_ optimization and caching layer for any website. On top of what you can already implement with PageSpeed, this appliance provide:
 
 - Simpler configuration, define a few required environment variable in a file and nginx and varnish will be automatically configured to handle your site with the best practices for performance improvement
-- Fast deployment both in a [local Docker environment](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d) and on [AWS Elastic] Beanstalk(https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo)
+- Fast deployment both in a [local Docker environment](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d) and on [AWS Elastic Beanstalk](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo)
 - Aggregation of third party assets and resources: serve everything from your CDN, optimize the bandwith and reduce your liability to third party outgages or misconfigurations
 - Automatic configuration for Elastic Cache on AWS, setting the proper permissions on the relevant security groups
 - Automatic deployment on CloudFront, including domain sharding and DNS registration on Route53

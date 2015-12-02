@@ -76,6 +76,11 @@ You can optionally set EB_OPTIONS with the options that you would want to pass t
 ```bash
 $ export EB_OPTIONS="--region us-east-1 --profile ebuser"
 ```
+If you are using a custom VPC, please also set `EB_CREATE_OPTIONS` [with the proper flags](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-create.html), for instance:
+```bash
+export EB_CREATE_OPTIONS="--vpc --vpc.id ID --vpc.ec2subnets subnet1,subnet2 --vpc.elbpublic  --vpc.securitygroups securitygroup1,securitygroup2"
+```
+Please note that if you just add `--vpc` you will be guided with prompts during the process.
 Then run
 
 ```bash

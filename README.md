@@ -14,7 +14,8 @@ This PageSpeed based appliance is a _non-intrusive, self-contained, auto-scaling
 - Aggregation of third party assets and resources: serve everything from your CDN, optimize the bandwith and reduce your liability to third party outgages or misconfigurations
 - Automatic configuration for Elastic Cache on AWS, setting the proper permissions on the relevant security groups
 - Automatic deployment on CloudFront, including domain sharding and DNS registration on Route53
-- Automatic resize of images on the fly, using [nginx image filter](http://nginx.org/en/docs/http/ngx_http_image_filter_module.html) module 
+- Automatic resizing of images on the fly, using [nginx image filter](http://nginx.org/en/docs/http/ngx_http_image_filter_module.html) module 
+- DDOS protection, using the [Varnish Throttling Module](https://github.com/varnish/libvmod-vsthrottle)
 
 ### Running it
 This platform can be run locally, within a docker environment, or on AWS, within [Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/). Typically you will testing a configuration in local, and then deploy to AWS.

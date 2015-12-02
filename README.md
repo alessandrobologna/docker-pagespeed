@@ -1,23 +1,26 @@
 ![Architecture diagram](art/diagram.jpg)
-# Google PageSpeed on Docker, with Varnish on top
 
-## What is it?
+
+## Google PageSpeed on Docker, with Varnish on top
+
+### What is it?
 A docker build of [pagespeed](https://developers.google.com/speed/pagespeed/module/), [nginx](http://nginx.org/) and [varnish 4](https://www.varnish-cache.org/), with some convenient tooling to help developing environment configurations that can be deployed to Amazon Elastic Beanstalk
 
-## Features
+### Features
 This PageSpeed based appliance is a _non-intrusive, self-contained, auto-scaling_ optimization and caching layer for any website. On top of what you can already implement with PageSpeed, this appliance provide:
 
 - Simpler configuration, define a few required environment variable in a file and nginx and varnish will be automatically configured to handle your site with the best practices for performance improvement
-- Fast deployment both in a [local Docker environment](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d) and on [AWS Elastic] Beanstalk((https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo))
-- Support for aggregation of third party assets and resources: serve everything from your CDN, optimize the bandwith and reduce your liability to third party outgages or misconfigurations
-- Automatic support for Elastic Cache on AWS, setting the proper permissions on the relevant security groups
-- Support for automatic deployment on CloudFront and DNS registration on Route53
-- Support for domain sharding (unless you are already using HTTP/2, in which case is not a good idea)
+- Fast deployment both in a [local Docker environment](https://asciinema.org/a/aw0mluaq5bj319k5ndtt0vz8d) and on [AWS Elastic Beanstalk](https://asciinema.org/a/1osqlqpnma9jl8pg5sxsh4ypo)
+- Aggregation of third party assets and resources: serve everything from your CDN, optimize the bandwith and reduce your liability to third party outgages or misconfigurations
+- Automatic configuration for Elastic Cache on AWS, setting the proper permissions on the relevant security groups
+- Automatic deployment on CloudFront, including domain sharding and DNS registration on Route53
+- Automatic resizing of images on the fly, using [nginx image filter](http://nginx.org/en/docs/http/ngx_http_image_filter_module.html) module 
+- DDOS protection, using the [Varnish Throttling Module](https://github.com/varnish/libvmod-vsthrottle)
 
-## Running it
+### Running it
 This platform can be run locally, within a docker environment, or on AWS, within [Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/). Typically you will testing a configuration in local, and then deploy to AWS.
 
-### Within a local Docker environment
+#### Within a local Docker environment
 Prerequisites:
 - [docker](https://docs.docker.com/installation/)
 - [docker-machine](https://docs.docker.com/machine/install-machine/)
@@ -65,7 +68,7 @@ You can make further changes, and run again, this time it will take just a few s
 ( _second run is much quicker_)
 
 
-### On Elastic Beanstalk
+#### On Elastic Beanstalk
 
 This assumes that you know how to [create an application](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.newapp.html) (use the latest docker based option). Once your application is created, you will need to [launch an enviroment] (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.environments.html) which will be used by your site.  The makefile will help you to create an environment for each site. 
 

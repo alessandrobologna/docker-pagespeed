@@ -74,6 +74,9 @@ sub ps_capabilities {
 sub vcl_hash {
   // Use the PS-CapabilityList value and the detected device for computing the hash
   hash_data(req.http.X-Page-Speed-Device);
+  if (req.http.Authorization) {
+      hash_data(req.http.Authorization);
+  }
 }
 
 # Block 3a: Define ACL for purge requests

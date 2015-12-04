@@ -48,7 +48,7 @@ init: checkarg
 	 && eb init ${EB_OPTIONS} \
 	 && mkdir -p .elasticbeanstalk/saved_configs \
 	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' ../../templates/default.cfg.yml)\"")" > .elasticbeanstalk/saved_configs/default.cfg.yml \
-	 && eb ${EB_OPTIONS} create ${EB_CREATE_OPTIONS} --cname $$(echo $${EB_DOMAIN:-$${SERVER_NAME}} | sed s/.elasticbeanstalk.com//g) \
+	 && eb create ${EB_OPTIONS} ${EB_CREATE_OPTIONS} --cname $$(echo $${EB_DOMAIN:-$${SERVER_NAME}} | sed s/.elasticbeanstalk.com//g) \
 	 && cd ../.. && bash scripts/memcached ${ARGUMENT} $${MEMCACHED} \
 	 && make deploy ${ARGUMENT} \
 	 && cd target/${ARGUMENT} && eb open

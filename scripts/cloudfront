@@ -19,41 +19,49 @@ done)
 echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/cloudfront.json)\"")" > target/${SITE}/cloudfront.json 
 CLOUDFRONT=$($AWS cloudfront create-distribution --query Distribution.DomainName --output=text --distribution-config file://${PWD}/target/${SITE}/cloudfront.json)
 
+if [ -z "${CLOUDFRONT}" ]
+then 
+	echo "Could not create a cloudfront distribution, exiting"
+	exit 1
+fi
+
 echo "Created Cloudfront distribution ${CLOUDFRONT} for origin ${FRONTEND}"
 
-# split the name, assuming that the domain is the last two parts
-DOMAIN=${2:-$(echo ${FRONTEND}|rev|cut -d '.' -f -2|rev)}
+# split the name, assuming that the domain is after the first dot. Can be overriden with DOMAIN
+DOMAIN=${DOMAIN:-$(echo ${FRONTEND} | cut -d '.' -f 2-)}
 
 # finally, check if the required DNS cname is set to the load balancer using route53
 ZONE=$($AWS route53 list-hosted-zones --query "HostedZones[?Name==\`${DOMAIN}.\`].Id" --output text)
-if [[ -n "${ZONE}" ]]
+if [[ -z "${ZONE}" ]]
 then
-	# check if the record already exists
-	QUERY=$($AWS route53 list-resource-record-sets --hosted-zone-id ${ZONE} --query "ResourceRecordSets[?Name==\`${FRONTEND}.\`].Name" --output text)
-	if [[ -z "${QUERY}" ]]
-	then
-		SEP=""
-		CHANGES=$(for CNAME in ${ALIASES}
-		do
-			echo -n "${SEP}$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changes.json)\"")"  
-			SEP=","
-		done
-		)
-		
-		echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changeset.json)\"")" > target/${SITE}/changeset.json 
-		echo "Creating records for ${ITEMS}"
-		CHANGEID=$($AWS route53 change-resource-record-sets --hosted-zone-id ${ZONE} --change-batch file://${PWD}/target/${SITE}/changeset.json  --query 'ChangeInfo.Id' --output text)
-		echo -n "Waiting for ${CHANGEID} to be propagated"
-		until [[ "$STATUS" == "INSYNC" ]]
-		do
-			sleep 5
-			echo -n "."
-			STATUS=$($AWS route53 get-change --id ${CHANGEID} --query 'ChangeInfo.Status' --output text)
-		done
-		echo "Records for ${ITEMS} created and propagated successfully"
-	else
-		echo "Already found a record for ${QUERY} in ${DOMAIN}, please delete it before attempting again"
-	fi
-else
 	echo "Cannot find an hosted zone for ${DOMAIN} in your account, skipping alias generation"
+	exit 1
 fi
+
+# check if the record already exists
+QUERY=$($AWS route53 list-resource-record-sets --hosted-zone-id ${ZONE} --query "ResourceRecordSets[?Name==\`${FRONTEND}.\`].Name" --output text)
+if [[ -n "${QUERY}" ]]
+then
+	echo "Already found a record for ${QUERY} in ${DOMAIN}, please delete it before attempting again"
+	exit 1
+fi
+
+SEP=""
+CHANGES=$(for CNAME in ${ALIASES}
+do
+	echo -n "${SEP}$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changes.json)\"")"  
+	SEP=","
+done
+)
+
+echo "$(eval "echo -e \"$(sed 's/\"/\\\"/g' templates/changeset.json)\"")" > target/${SITE}/changeset.json 
+echo "Creating records for ${ITEMS}"
+CHANGEID=$($AWS route53 change-resource-record-sets --hosted-zone-id ${ZONE} --change-batch file://${PWD}/target/${SITE}/changeset.json  --query 'ChangeInfo.Id' --output text)
+echo -n "Waiting for ${CHANGEID} to be propagated"
+until [[ "$STATUS" == "INSYNC" ]]
+do
+	sleep 5
+	echo -n "."
+	STATUS=$($AWS route53 get-change --id ${CHANGEID} --query 'ChangeInfo.Status' --output text)
+done
+echo "Records for ${ITEMS} created and propagated successfully"

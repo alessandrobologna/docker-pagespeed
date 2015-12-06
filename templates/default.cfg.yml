@@ -7,10 +7,20 @@ OptionSettings:
     IamInstanceProfile: ${AWS_EB_ROLE:-aws-elasticbeanstalk-ec2-role}
   aws:elasticbeanstalk:application:
     Application Healthcheck URL: ${HEALTCHECK:-/}
+  aws:autoscaling:trigger:
+    MeasureName: Latency
+    LowerThreshold: '${MIN_LATENCY:-0.2}'
+    UpperThreshold: '${MAX_LATENCY:-0.5}'
+    Unit: Seconds
   aws:elasticbeanstalk:monitoring:
     Automatically Terminate Unhealthy Instances: 'true'
   aws:elasticbeanstalk:command:
     BatchSize: '30'
     BatchSizeType: Percentage
+  aws:autoscaling:updatepolicy:rollingupdate:
+    MinInstancesInService: '1'
+    PauseTime: PT5M30S
+    MaxBatchSize: '1'
+    RollingUpdateEnabled: true
 
     

@@ -116,6 +116,7 @@ If you want to test integration with CloudFront as a downstream caching layer, y
 
 NAME | DEFAULT VALUE | DESCRIPTION
 -----|---------------|------------
+ADMIN_ACL | | A white space delimited list of CIDRs that can access the [/pagespeed_admin](https://developers.google.com/speed/pagespeed/module/console) console
 AWS_EB_ROLE | aws-elasticbeanstalk-ec2-role | On EB deployments, the instance role assigned for each instance. The default value is what the AWS consoles creates automatically when you use the wizard to run your 'hello world' first app.
 AWS_EB_ROOT_VOLUME_SIZE | 30 | On EB deployments, the size of the root volume (in GB) for each instance.
 AWS_EW_INSTANCE_TYPE | t2.large |  On EB deployments, the EC2 instance type that you intend to run. The default T2 is plenty for small sites and testing.
@@ -147,6 +148,7 @@ PROXY_DOMAINS | | This is a white space delimited list of domains that your site
 PROXY_HTTPS_DOMAINS | | Same as PROXY_DOMAINS, but for resources that can be served only on https.
 PAGESPEED | on | Can be used to optionally turn PageSpeed completely off, therefore acting as a simple reverse proxy
 PROXY_PATH | _assets | When resources in PROXY_DOMAINS or HTTPS_PROXY_DOMAINS are rewritten in the FRONTEND uri space, their url is constructed as _assets/plain/domain/path to avoid clashes within the uri space. If /_assets/ is already used by your site, the value can be changed to avoid conflicts
+REAL_IP_FROM | 0.0.0.0/24 | A white space delimited list of CIDRs to configure the recursive discovery of the client real ip using the [nginx real ip module](http://nginx.org/en/docs/http/ngx_http_realip_module.html) 
 RESIZE_PATH | _resize | Allows on the flight resizing of images (jpg only). The image must resized in one of the authorized domains, and the resized url would for instance _resize/[width]x[height]/www.example.com/images/big.jpg. [width] and [height] are expressed in pixels and can be set to - if the resize should not constrain that dimension. Since the result image will also be optmized by PageSpeed, conversion to webp and quality can be set with PageSpeed options  
 REWRITE_LEVEL| CoreFilters | Set the PageSpeed [rewrite level](https://developers.google.com/speed/pagespeed/module/config_filters) 
 SERVER_NAME | | The fully qualified hostname where you are running PageSpeed. It can be your local docker-machine ip address, the elastic beanstalk server, or any other name that you have assigned to it.

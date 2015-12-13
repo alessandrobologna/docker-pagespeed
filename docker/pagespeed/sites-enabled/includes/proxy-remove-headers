@@ -1,5 +1,6 @@
 proxy_read_timeout 10s;
 proxy_http_version 1.1;
+proxy_hide_header Age;
 proxy_hide_header Expires;
 proxy_hide_header Last-Modified;
 proxy_hide_header Pragma;

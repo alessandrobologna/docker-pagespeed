@@ -6,7 +6,7 @@ OptionSettings:
     InstanceType: ${AWS_EW_INSTANCE_TYPE:-t2.large}
     IamInstanceProfile: ${AWS_EB_ROLE:-aws-elasticbeanstalk-ec2-role}
   aws:elasticbeanstalk:application:
-    Application Healthcheck URL: ${HEALTCHECK:-/}
+    Application Healthcheck URL: ${HEALTHCHECK:-/}
   aws:autoscaling:trigger:
     MeasureName: Latency
     LowerThreshold: '${MIN_LATENCY:-0.2}'

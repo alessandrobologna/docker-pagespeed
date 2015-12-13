@@ -128,10 +128,11 @@ FILTERS_ON | | A white space delimited list of PageSpeed settings that you want 
 FILTERS_OFF | | A white space delimited list of PageSpeed settings that you want to de-activate for your site. 
 FILTERS_ENABLED |  | A white space delimited list of filters to enable
 FILTERS_DISABLED | | A white space delimited list of filters to disable
+FOLLOW_REDIRECTS | | A regex to specify backend urls where PageSpeed should follow a redirect, if received. 
 CUSTOM_SETTINGS | | Custom setting for PageSpeed that are not just "on" or off". For instance, "pagespeed MaxSegmentLength 250;". Note that in this case, you will need to respect the full syntax for PageSpeed.
 FRONTEND | SERVER_NAME | This is the domain that you will use, facing the internet. Typically, www.example.com. If not provided, it will fall back to SERVER_NAME
 GRACE | 3600 | A time period in seconds, for which PageSpeed will serve "graced" responses, i.e. responses that are expired, while a new response is fetched and cached in the background
-HEALTCHECK | / |  The path that will be used by both Varnish and Elastic Beanstalk to determine the health status. It needs to be returning a 2xx response code, so if "/" returns a 301, use the value of the Location header in the response instead (say, /home.html).
+HEALTHCHECK | / |  The path that will be used by both Varnish and Elastic Beanstalk to determine the health status. It needs to be returning a 2xx response code, so if "/" returns a 301, use the value of the Location header in the response instead (say, /home.html).
 HIDE_PROXY_HEADERS | | If set (to any value) will direct PageSpeed to ignore all the response headers related to caching from any proxied resource. Also see PROXY_DOMAINS
 HIDE_BACKEND_HEADERS | | If set (to any value) will direct PageSpeed to ignore all the response headers related to caching from ORIGIN or BACKEND
 IF_DESKTOP | | Direct PageSpeed to optionally send additional headers to ORIGIN or BACKEND if the request is detected as coming from a desktop browser. For instance a value could be "Cookie: DeviceType=desktop"
@@ -149,7 +150,8 @@ PROXY_HTTPS_DOMAINS | | Same as PROXY_DOMAINS, but for resources that can be ser
 PAGESPEED | on | Can be used to optionally turn PageSpeed completely off, therefore acting as a simple reverse proxy
 PROXY_PATH | _assets | When resources in PROXY_DOMAINS or HTTPS_PROXY_DOMAINS are rewritten in the FRONTEND uri space, their url is constructed as _assets/plain/domain/path to avoid clashes within the uri space. If /_assets/ is already used by your site, the value can be changed to avoid conflicts
 REAL_IP_FROM | 0.0.0.0/24 | A white space delimited list of CIDRs to configure the recursive discovery of the client real ip using the [nginx real ip module](http://nginx.org/en/docs/http/ngx_http_realip_module.html) 
-RESIZE_PATH | _resize | Allows on the flight resizing of images (jpg only). The image must resized in one of the authorized domains, and the resized url would for instance _resize/[width]x[height]/www.example.com/images/big.jpg. [width] and [height] are expressed in pixels and can be set to - if the resize should not constrain that dimension. Since the result image will also be optmized by PageSpeed, conversion to webp and quality can be set with PageSpeed options  
+REAL_IP_HEADER | X-Real-Ip | The custom header that will be sent to backends with the cient real ip (see also REAL_IP_FROM)  
+RESIZE_PATH | _resize | Allows resizing of jpg images on the fly. The original image file must reside in one of the authorized domains; if the url for the image is `http://www.example.com/images/big.jpg`, then the resized url can be accessed with `/_resize/[width]x[height]/www.example.com/images/big.jpg.` [width] and [height] are expressed in pixels and can be set to - if the resize should not constrain that dimension. Since the result image will also be optmized by PageSpeed, conversion to webp and quality can be set with PageSpeed options  
 REWRITE_LEVEL| CoreFilters | Set the PageSpeed [rewrite level](https://developers.google.com/speed/pagespeed/module/config_filters) 
 SERVER_NAME | | The fully qualified hostname where you are running PageSpeed. It can be your local docker-machine ip address, the elastic beanstalk server, or any other name that you have assigned to it.
 MIN_TTL | 120 | The time period, in seconds, for which PageSpeed will keep cached responses in Varnish cache

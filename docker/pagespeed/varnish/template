@@ -12,7 +12,7 @@ backend default {
   .host = "${SERVER_NAME}";
   .port = "8080";
   .probe = {
-    .url = "${HEALTCHECK:-/}";
+    .url = "${HEALTHCHECK:-/}";
     .timeout = 60s;
     .interval = 30s;
     .window = 1;
@@ -228,6 +228,7 @@ sub vcl_backend_response {
     } 
     // save the TTL assigned to this object
     set beresp.http.X-Page-Speed-TTL=beresp.ttl;
+    
     // make sure the object is still cached in varnish for a minimum amount of time
     if (beresp.ttl == 0s) {
     	set beresp.ttl   = ${MIN_TTL:-120}s;
@@ -260,7 +261,7 @@ sub vcl_deliver {
           // after a few seconds that the response is a HIT, there's a reasonable certainty that it has been purged and then rewritten to a fair extent, so
           // add a configurable extension to the ttl for downstream caches 
           if (std.integer(resp.http.Age,0) < ${MAX_AGE:-120}) {
-            // still quite new cannot risk keep in downstream for too long
+            // still quite new, so we cannot risk keeping it in downstream for too long
             set resp.http.Cache-Control="public, max-age=" + (${MAX_AGE:-120} - std.integer(resp.http.Age,0));
           } else {
             // this response has been in cache for a while, downstream can keep it for much longer (up to the source TTL)

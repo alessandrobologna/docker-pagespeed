@@ -156,7 +156,7 @@
                     "CloudFront-Is-Desktop-Viewer",
                     "CloudFront-Is-Mobile-Viewer",
                     "CloudFront-Is-SmartTV-Viewer",
-                    "CloudFront-Is-Tablet-Viewer",
+                    "CloudFront-Is-Tablet-Viewer"
                 ],
                 "Quantity": 6
             },

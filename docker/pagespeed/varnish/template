@@ -22,26 +22,26 @@ backend default {
 
 sub browserdetect {
   set req.http.X-UA = "default";
-  if (req.http.user-agent ~ "MSIE") {
+  if (req.http.User-Agent ~ "MSIE") {
     set req.http.X-UA = "msie";
   } 
-  if (req.http.user-agent ~ "Firefox") {
+  if (req.http.User-Agent ~ "Firefox") {
     set req.http.X-UA = "firefox";
   }  
-  if (req.http.user-agent ~ "Safari") {
+  if (req.http.User-Agent ~ "Safari") {
      set req.http.X-UA = "safari";
   } 
-  if (req.http.user-agent ~ "Chrome") {
+  if (req.http.User-Agent ~ "Chrome") {
     set req.http.X-UA = "chrome";
   } 
-  if (req.http.user-agent ~ "CloudFront") {
-    set req.http.X-UA = "cloudfront";
+  if (req.http.User-Agent ~ "${CDN_UA:-CloudFront}") {
+    set req.http.X-UA = "cdn";
   } 
 }
 
 sub ps_capabilities {
   call browserdetect; 
-  if (req.http.X-UA ~ "cloudfront") {
+  if (req.http.X-UA ~ "cdn") {
   	if (req.http.CloudFront-Is-Mobile-Viewer == "true") {
   	  set req.http.X-UA-Device="mobile";
   	} elif (req.http.CloudFront-Is-Tablet-Viewer == "true") {
@@ -51,6 +51,7 @@ sub ps_capabilities {
   	} else {
   	  set req.http.X-UA-Device="desktop";
   	}
+  	// todo: add other tests for other cdn providers
   } else {
     call devicedetect;
   } 
@@ -149,13 +150,17 @@ sub vcl_recv {
   
   set req.http.Host = "${SERVER_NAME}";
 
-  # call generate_user_agent_based_key;
   call ps_capabilities;
   
-  # this is working only for cloudfront for now. 
-  if (req.http.X-UA ~ "cloudfront") {
-    // unset the user agent, as PageSpeed will still try to use if it's available
+  # handle the case of a CDN passing a custom User-Agent
+  if (req.http.User-Agent ~ "${CDN_UA:-CloudFront}") {
+    // replace the user agent, as PageSpeed will still try to use if it's available, regardless of the PS-CapabilityList
  	unset req.http.User-Agent;
+ 	if (req.http.X-UA-Device ~ "mobile") {
+      set req.http.User-Agent="${CDN_UA_MOBILE:-Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543 Safari/419.3}";
+    } else {
+      set req.http.User-Agent="${CDN_UA_DESKTOP:-Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36}";
+    }
   }
   
   if (req.http.Cookie) {

@@ -35,6 +35,7 @@ ORIGIN=${ORIGIN:-${BACKEND}}
 MAP_BACKENDS=$(for backend in ${BACKENDS}
 do
 	echo -e "\tpagespeed Domain ${backend};"
+	echo -e "\tpagespeed MapOriginDomain 127.0.0.1:8080/ ${backend};"
 	echo -e "\tpagespeed MapRewriteDomain ${FRONTEND} ${backend};"
 done)
 
@@ -100,12 +101,12 @@ SECRET_KEY=$(dd if=/dev/urandom bs=256 count=1 2>/dev/null | env LC_CTYPE=C tr -
 
 SET_HEADER_MOBILE=$(if [ -n "${IF_MOBILE}" ]
 then
-	awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}' <<< ${IF_MOBILE}
+	echo -e "${IF_MOBILE}" |awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}'
 fi)
 
 SET_HEADER_DESKTOP=$(if [ -n "${IF_DESKTOP}" ]
 then
-	awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}' <<< ${IF_DESKTOP}
+	echo -e "${IF_DESKTOP}" |awk -F ": " '{name=$1; printf "unset req.http.%s;",name} {$1="";value=$0;sub(/^[ ]+/, "", value)} {printf "set req.http.%s=\"%s\";",name,value}' 
 fi)
 
 DEBUG_HEADERS=$([ -n "${DEBUG}" ] && echo "set req.http.X-Page-Speed-Debug=\"Yes\";")

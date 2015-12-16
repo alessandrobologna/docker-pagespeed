@@ -123,6 +123,9 @@ AWS_EW_INSTANCE_TYPE | t2.large |  On EB deployments, the EC2 instance type that
 BACKEND |  | This is the fully qualified hostname of the site that you want to accelerate. If the HTML pages contain references (as in src urls) to this domain, they will be rewritten with the value of FRONTEND. Also, see ORIGIN
 BACKENDS | | If the origin server is doing some kind of domain sharding, where cdn1.mysite.com/js/jsfile.cs and cdn2.mysite.com/css/cssfile.css are really just aliases for www.mysite.com/js or www.mysite.com/css, you can just add here a "*.mysite.com" to indicate that all those domains are really something that PageSpeed can optimize. 
 CDN | | A list of domain names (such as cdn1.example.com, cdn2.example.com) that PageSpeed should be using for sharding assets
+CDN_UA | CloudFront | A valid regex that matches the CDN User Agent. It will be replace with the value of CDN_UA_DESKTOP or CDN_UA_MOBILE
+CDN_UA_DESKTOP | Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36 | Generic user agent for Desktop to be used if a CDN user agent is detected
+CDN_UA_MOBILE | Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543 Safari/419.3 | Generic user agent for Mobile to be used if a CDN user agent is detected
 COOKIES | |  If cookies are really needed for your backend to work, you can list them here. Remember, cookies are really a _bad thing_. But if you need cookieA and cookieB, just specify "cookieA|cookieB" 
 FILTERS_ON | | A white space delimited list of PageSpeed settings that you want to activate for your site. 
 FILTERS_OFF | | A white space delimited list of PageSpeed settings that you want to de-activate for your site. 
@@ -138,10 +141,12 @@ HIDE_BACKEND_HEADERS | | If set (to any value) will direct PageSpeed to ignore a
 IF_DESKTOP | | Direct PageSpeed to optionally send additional headers to ORIGIN or BACKEND if the request is detected as coming from a desktop browser. For instance a value could be "Cookie: DeviceType=desktop"
 IF_MOBILE | | Same as IF_DESKTOP, but for mobile devices. The detection is done in VCL, and also supports CloudFront device detection headers
 MAX_AGE | 120 | Sets the max-age Cache-Control header for requests that have been deemed to have already been optimized enough to be cached on downstream caches (such a CloudFront) 
-MAX_TTL | 180 | HTML responses are cached in varnish for the value of TTL, or the value of backend max-age response if greater than 0. In some cases, that value may be too high and make so that a partially optimized response is kept in cache too long. Setting a MAXTTL allows to override the value sent by the backend
 MAX_DOWNSTREAM_AGE | the backend response max-age, or the current TTL | For requests that are deemed to be already fully optimized, sets a max-age for downstream caches
+MAX_LATENCY | 0.5 | In an EB deployment, the threshold for latency that will cause a up autoscaling event to be triggered. Also see MIN_LATENCY.
 MAX_REQUESTS | 256 | Maximum number of requests that are accepted from the same client (using X-Forwarded resolution)
+MAX_TTL | 180 | HTML responses are cached in varnish for the value of TTL, or the value of backend max-age response if greater than 0. In some cases, that value may be too high and make so that a partially optimized response is kept in cache too long. Setting a MAXTTL allows to override the value sent by the backend
 MEMCACHED | | Optionally provide the ip address of a Memcached server listening on port 11211 (for instance an Elastic Cache server. If provided, a rule will be added to the security group for Elastic Cache to allow connections from your Elastic Beanstalk environment. 
+MIN_LATENCY | 0.2 | In an EB deployment, the threshold for latency that will cause a down autoscaling event to be triggered. Also see MAX_LATENCY 
 MINAGE | 60 | The treshold time in seconds after wich a response will be deemed to be already sufficiently optimized to be cached on downstream servers
 NGINX_CUSTOM_OPTIONS | | If provided, adds custom commands to the nginx location that serves responses from the BACKEND. It can be used to, for instance, use the substitution module to inject code in the page
 ORIGIN | | If provided, will direct PageSpeed to send requests to it instead of BACKEND, and set the Host: header to the value of BACKEND. If your external domain name is www.example.com, but your origin is origin.example.com, you will set BACKEND to www.example.com and ORIGIN to origin.backend.com

@@ -50,7 +50,7 @@ init: checkarg
 	 && mkdir -p .elasticbeanstalk/saved_configs \
 	 && EB_CONFIG=$$(ls ../../configs/eb/${ARGUMENT}/default.cfg.yml ../../templates/default.cfg.yml 2>/dev/null | head -1) \
 	 && echo "$$(eval "echo -e \"$$(sed 's/\"/\\\"/g' $${EB_CONFIG})\"")" > .elasticbeanstalk/saved_configs/default.cfg.yml \
-	 && eb create $${EB_OPTIONS} $${EB_CREATE_OPTIONS} --cname $$(echo $${EB_DOMAIN:-$${SERVER_NAME}} | sed s/.elasticbeanstalk.com//g) \
+	 && eb create $${EB_OPTIONS} $${EB_CREATE_OPTIONS} -d --cname $$(echo $${EB_DOMAIN:-$${SERVER_NAME}} | sed s/.elasticbeanstalk.com//g) \
 	 && cd ../.. && bash scripts/memcached ${ARGUMENT} $${MEMCACHED} \
 	 && make deploy ${ARGUMENT} \
 	 && cd target/${ARGUMENT} && eb open

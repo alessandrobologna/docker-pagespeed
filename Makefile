@@ -76,7 +76,7 @@ deploy:
 	@echo "Deploying ${ARGUMENT} to Amazon Beanstalk"
 	@for target in ${ARGUMENT}; \
 		do (if [ -d "target/$${target}/.elasticbeanstalk" ]; then echo "Deploying $$target";  make eb $$target && cd target/$$target && eb deploy  &> "../../logs/deploy-$$target.log"; fi &) done; \
-		sleep 5; echo "done, tailing logs, safe to ctrl-c"; tails=$$(for target in ${ARGUMENT}; do echo "logs/deploy-$$target.log"; done); tail -f $$tails
+	tails=$$(for target in ${ARGUMENT}; do echo "logs/deploy-$$target.log"; done); echo -e "run:\n tail -f $$tails \nto tail this deployment logs"
 
 
 cloudfront: checkarg

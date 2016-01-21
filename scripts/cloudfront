@@ -3,7 +3,11 @@
 AWS="aws ${EB_OPTIONS}"
 SITE=$1
 FRONTEND="${FRONTEND:-${SERVER_NAME}}"
-ALIASES="${FRONTEND} ${CDN}"
+ALIASES="${CDN}"
+if [ "${FRONTEND}" != "${BACKEND}" ]
+then
+    ALIASES="${ALIASES} ${FRONTEND}"
+fi
 
 
 # build the configuration for cloudfront

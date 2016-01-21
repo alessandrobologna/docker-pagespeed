@@ -22,5 +22,7 @@ OptionSettings:
     PauseTime: PT5M30S
     MaxBatchSize: '1'
     RollingUpdateEnabled: true
-
+  aws:autoscaling:asg:
+    MaxSize: '${AWS_EB_MAX_INSTANCES:-4}'
+    MinSize: '${AWS_EB_MIN_INSTANCES:-1}'
     

@@ -18,9 +18,11 @@ scale: checkarg
 	@docker-compose scale pagespeed=${ARGUMENT} && docker-compose up -d  --force-recreate --no-deps nginx && docker-compose logs
 	
 push: checkarg
-	@echo "Building and pushing images to docker hub ${ARGUMENT} repository"
-	@docker build -t ${ARGUMENT} docker/pagespeed
-	@docker push ${ARGUMENT}
+	@tag=$$(git rev-parse --short HEAD) && echo "Building and pushing images to docker hub ${ARGUMENT}:$$tag repository" \
+	&& docker build -t ${ARGUMENT}:$$tag docker/pagespeed \
+	&& docker push ${ARGUMENT}:$$tag \
+	&& docker push ${ARGUMENT}:latest
+	
 
 # The following rules are for Elastic Beanstalk deployment
 %.zip: configs/eb/% 

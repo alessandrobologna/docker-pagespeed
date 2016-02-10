@@ -39,17 +39,24 @@ sub browserdetect {
   } 
 }
 
+# sample headers for tablet
+#   ReqHeader      CloudFront-Is-Desktop-Viewer: false
+#   ReqHeader      CloudFront-Is-Mobile-Viewer: true
+#   ReqHeader      CloudFront-Is-SmartTV-Viewer: false
+#   ReqHeader      CloudFront-Is-Tablet-Viewer: true
+
 sub ps_capabilities {
   call browserdetect; 
   if (req.http.X-UA ~ "cdn") {
+  	set req.http.X-UA-Device="desktop";
   	if (req.http.CloudFront-Is-Mobile-Viewer == "true") {
   	  set req.http.X-UA-Device="mobile";
-  	} elif (req.http.CloudFront-Is-Tablet-Viewer == "true") {
+  	} 
+  	if (req.http.CloudFront-Is-Tablet-Viewer == "true") {
   	  set req.http.X-UA-Device="tablet";
-  	} elif (req.http.CloudFront-Is-SmartTV-Viewer == "true") {
+  	} 
+  	if (req.http.CloudFront-Is-SmartTV-Viewer == "true") {
   	  set req.http.X-UA-Device="tv";
-  	} else {
-  	  set req.http.X-UA-Device="desktop";
   	}
   	// todo: add other tests for other cdn providers
   } else {

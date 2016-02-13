@@ -137,6 +137,16 @@ ${SHARD_DOMAINS}
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 		${HIDE_PROXY_HEADERS}
 	}
+	
+	location @error {
+		proxy_pass http://${ORIGIN};
+		proxy_set_header Host ${BACKEND};
+		proxy_set_header Referer  http://${BACKEND};
+		proxy_redirect ~^/(.+)\$ ${FRONTEND}/\$1;
+		proxy_set_header ${REAL_IP_HEADER:-X-Real-IP} \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		pagespeed off;
+	}
 
 	# reverse proxy to backend	
 	location @proxy {
@@ -146,6 +156,8 @@ ${SHARD_DOMAINS}
 		proxy_redirect ~^/(.+)\$ ${FRONTEND}/\$1;
 		proxy_set_header ${REAL_IP_HEADER:-X-Real-IP} \$remote_addr;
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_intercept_errors on;
+		error_page 404 500 502 503 504 @error;
 		${HIDE_BACKEND_HEADERS}
 		${NGINX_CUSTOM_OPTIONS}
 	}
